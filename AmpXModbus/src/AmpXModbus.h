@@ -5,7 +5,7 @@
 #include <Arduino.h>
 
 uint16_t calculateCRC(uint8_t *data, uint8_t length);
-//uint16_t combineAndSwap(uint8_t high, uint8_t low);
-
+float convertToFloat(uint32_t value);
+uint32_t combineAndSwap(uint16_t highWord, uint16_t lowWord);
 
 #endif // AMPXMODBUSLIBRARY_H
