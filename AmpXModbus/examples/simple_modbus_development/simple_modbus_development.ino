@@ -283,6 +283,6 @@ void loop() {
     Serial.println("Error reading energy registers");
   }
 
-   Serial.println(""); //Blank line to make it more readable.
+  Serial.println(""); //Blank line to make it more readable.
   delay(5000); // Wait for a second before the next read
 }
