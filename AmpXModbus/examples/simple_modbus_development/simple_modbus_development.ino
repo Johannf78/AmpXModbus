@@ -1,9 +1,8 @@
 #include <SoftwareSerial.h>
-//#include <AmpXModbusLibrary.h>
-//#include "D:\\OneDrive\\JF Data\\UserData\\Documents\\Arduino\\libraries\\AmpXModbusLibrary\\src\\AmpXModbusLibrary.h"
+
+//Move the libary to the default location, or change the path to the correct location.
+#include "D:\\OneDrive\\JF Data\\UserData\\Documents\\Arduino\\libraries\\AmpXModbusLibrary\\src\\AmpXModbus.h"
 //#include <AmpXModbus.h>
-//#include "D:\OneDrive\Dev\Ardruino\Sandbox\AmpX\ESP32\AmpXModbus\AmpXModbus\src\AmpXModbus.h"
-//Test
 
 // Define the RS485 control pins
 #define MAX485_DE 4
