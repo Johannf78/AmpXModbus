@@ -1,3 +1,4 @@
+//This library is required to use digital pins as a software serial port.
 #include <SoftwareSerial.h>
 
 //Move the libary to the default location, or change the path to the correct location.
@@ -28,6 +29,7 @@ uint16_t calculateCRC(uint8_t *buffer, uint8_t len) {
   }
   return crc;
 }
+
 float convertToFloat(uint32_t value) {
   float result;
   uint8_t *valuePtr = (uint8_t *)&value;
