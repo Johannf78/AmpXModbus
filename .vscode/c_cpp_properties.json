@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "D:/OneDrive/JF Data/UserData/Documents/Arduino/**",
+                "C:/Users/Johann/AppData/Local/Arduino15/packages/**"
+                /*\esp32\hardware\esp32\3.0.7"*/
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": null,
+            "intelliSenseMode": "windows-msvc-x64"
+        }
+    ],
+    "version": 4
+}

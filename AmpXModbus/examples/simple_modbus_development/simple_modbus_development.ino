@@ -2,7 +2,8 @@
 #include <SoftwareSerial.h>
 
 //Move the libary to the default location, or change the path to the correct location.
-#include "D:\\OneDrive\\JF Data\\UserData\\Documents\\Arduino\\libraries\\AmpXModbusLibrary\\src\\AmpXModbus.h"
+//#include "D:\\OneDrive\\JF Data\\UserData\\Documents\\Arduino\\libraries\\AmpXModbusLibrary\\src\\AmpXModbus.h"
+//#include "D:\\OneDrive\\Dev\\Ardruino\\AmpX\\ESP32\\AmpXModbus\\AmpXModbus\\src\\AmpXModbus.h
 //#include <AmpXModbus.h>
 
 // Define the RS485 control pins
@@ -48,6 +49,22 @@ uint32_t combineAndSwap(uint16_t highWord, uint16_t lowWord) {
          ((combined & 0x00FF0000) >> 8)  |
          ((combined & 0x0000FF00) << 8)  |
          ((combined & 0x000000FF) << 24);
+}
+
+uint64_t combineAndSwap64(uint16_t word1, uint16_t word2, uint16_t word3, uint16_t word4) {
+  uint64_t combined = ((uint64_t)word1 << 48) |
+                      ((uint64_t)word2 << 32) |
+                      ((uint64_t)word3 << 16) |
+                      (uint64_t)word4;
+
+  return ((combined & 0xFF00000000000000) >> 56) |
+         ((combined & 0x00FF000000000000) >> 40) |
+         ((combined & 0x0000FF0000000000) >> 24) |
+         ((combined & 0x000000FF00000000) >> 8)  |
+         ((combined & 0x00000000FF000000) << 8)  |
+         ((combined & 0x0000000000FF0000) << 24) |
+         ((combined & 0x000000000000FF00) << 40) |
+         ((combined & 0x00000000000000FF) << 56);
 }
 
 void preTransmission() {
@@ -233,6 +250,7 @@ void setup() {
 }
 
 void loop() {
+  //These variable are populated from the data read on Modbus, they are reused for different parameters, voltage, current, power, etc.
   uint16_t results[32];
   int64_t int64Results[2];
   
@@ -271,7 +289,7 @@ void loop() {
     Serial.println("Error reading Power registers");
   }
 
-  // Read energy registers from 2500 to 2528
+  // Read energy registers from 2500 to 2528. 64 Bit integer, 4 bytes, little endian
   if (readInt64Registers(1, 2500, 16, int64Results)) { // 1 is the Modbus slave ID, adjust if necessary
     Serial.print("Energy Register 0: ");
     Serial.println(int64Results[0]);
