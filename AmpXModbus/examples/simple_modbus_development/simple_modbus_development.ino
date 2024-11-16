@@ -1,5 +1,6 @@
 //This library is required to use digital pins as a software serial port.
 #include <SoftwareSerial.h>
+//EspSoftwareSerial - Include this libarary.
 
 //Move the libary to the default location, or change the path to the correct location.
 //#include "D:\\OneDrive\\JF Data\\UserData\\Documents\\Arduino\\libraries\\AmpXModbusLibrary\\src\\AmpXModbus.h"
@@ -297,7 +298,7 @@ void loop() {
     Serial.println("Error reading Power registers");
   }
 */
-  // Read energy registers from 2500 to 2528. 64 Bit integer, 4 bytes, little endian, 4 x 4 = 16 bytes, 
+  // Read energy registers from 2500 to 2528. 64 Bit integer, 4 bytes, little endian, 4 x 4 = 16 bytes, 2 Bytes per register 
   if (readInt64Registers(1, 2500, 4, int64Results)) { // 1 is the Modbus slave ID, adjust if necessary
     processInt64Registers(int64Results, 4, "Energy");
   } else {
@@ -305,5 +306,5 @@ void loop() {
   }
 
   Serial.println(""); //Blank line to make it more readable.
-  delay(5000); // Wait for a second before the next read
+  delay(10000); // Wait for a second before the next read
 }
