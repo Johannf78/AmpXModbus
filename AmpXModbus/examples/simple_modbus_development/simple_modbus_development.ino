@@ -3,7 +3,7 @@
 
 //Move the libary to the default location, or change the path to the correct location.
 //#include "D:\\OneDrive\\JF Data\\UserData\\Documents\\Arduino\\libraries\\AmpXModbusLibrary\\src\\AmpXModbus.h"
-//#include "D:\\OneDrive\\Dev\\Ardruino\\AmpX\\ESP32\\AmpXModbus\\AmpXModbus\\src\\AmpXModbus.h
+//#include "D:\\OneDrive\\Dev\\Ardruino\\AmpX\\ESP32\\AmpXModbus\\AmpXModbus\\src\\AmpXModbus.h"
 //#include <AmpXModbus.h>
 
 // Define the RS485 control pins
@@ -13,7 +13,6 @@
 #define TX_PIN 17
 
 SoftwareSerial modbusSerial(RX_PIN, TX_PIN);
-
 
 uint16_t calculateCRC(uint8_t *buffer, uint8_t len) {
   uint16_t crc = 0xFFFF;
@@ -31,41 +30,6 @@ uint16_t calculateCRC(uint8_t *buffer, uint8_t len) {
   return crc;
 }
 
-float convertToFloat(uint32_t value) {
-  float result;
-  uint8_t *valuePtr = (uint8_t *)&value;
-  uint8_t swapped[4];
-  swapped[0] = valuePtr[3];
-  swapped[1] = valuePtr[2];
-  swapped[2] = valuePtr[1];
-  swapped[3] = valuePtr[0];
-  memcpy(&result, swapped, sizeof(result));
-  return result;
-}
-
-uint32_t combineAndSwap(uint16_t highWord, uint16_t lowWord) {
-  uint32_t combined = ((uint32_t)highWord << 16) | lowWord;
-  return ((combined & 0xFF000000) >> 24) |
-         ((combined & 0x00FF0000) >> 8)  |
-         ((combined & 0x0000FF00) << 8)  |
-         ((combined & 0x000000FF) << 24);
-}
-
-uint64_t combineAndSwap64(uint16_t word1, uint16_t word2, uint16_t word3, uint16_t word4) {
-  uint64_t combined = ((uint64_t)word1 << 48) |
-                      ((uint64_t)word2 << 32) |
-                      ((uint64_t)word3 << 16) |
-                      (uint64_t)word4;
-
-  return ((combined & 0xFF00000000000000) >> 56) |
-         ((combined & 0x00FF000000000000) >> 40) |
-         ((combined & 0x0000FF0000000000) >> 24) |
-         ((combined & 0x000000FF00000000) >> 8)  |
-         ((combined & 0x00000000FF000000) << 8)  |
-         ((combined & 0x0000000000FF0000) << 24) |
-         ((combined & 0x000000000000FF00) << 40) |
-         ((combined & 0x00000000000000FF) << 56);
-}
 
 void preTransmission() {
   digitalWrite(MAX485_RE_NEG, HIGH);
@@ -163,6 +127,49 @@ void processRegisters(uint16_t *results, uint16_t numRegisters, const char* labe
   }
 }
 
+float convertToFloat(uint32_t value) {
+  float result;
+  uint8_t *valuePtr = (uint8_t *)&value;
+  uint8_t swapped[4];
+  swapped[0] = valuePtr[3];
+  swapped[1] = valuePtr[2];
+  swapped[2] = valuePtr[1];
+  swapped[3] = valuePtr[0];
+  memcpy(&result, swapped, sizeof(result));
+  return result;
+}
+
+uint32_t combineAndSwap(uint16_t highWord, uint16_t lowWord) {
+  uint32_t combined = ((uint32_t)highWord << 16) | lowWord;
+  return ((combined & 0xFF000000) >> 24) |
+         ((combined & 0x00FF0000) >> 8)  |
+         ((combined & 0x0000FF00) << 8)  |
+         ((combined & 0x000000FF) << 24);
+}
+
+uint64_t combineAndSwap64(uint16_t word1, uint16_t word2, uint16_t word3, uint16_t word4) {
+  uint64_t combined = ((uint64_t)word1 << 48) |
+                      ((uint64_t)word2 << 32) |
+                      ((uint64_t)word3 << 16) |
+                      (uint64_t)word4;
+
+  Serial.print("Combined: ");
+  Serial.println(combined, HEX);
+
+  uint64_t swapped = ((combined & 0xFF00000000000000) >> 56) |
+                     ((combined & 0x00FF000000000000) >> 40) |
+                     ((combined & 0x0000FF0000000000) >> 24) |
+                     ((combined & 0x000000FF00000000) >> 8)  |
+                     ((combined & 0x00000000FF000000) << 8)  |
+                     ((combined & 0x0000000000FF0000) << 24) |
+                     ((combined & 0x000000000000FF00) << 40) |
+                     ((combined & 0x00000000000000FF) << 56);
+
+  Serial.print("Swapped: ");
+  Serial.println(swapped, HEX);
+
+  return swapped;
+}
 
 bool readInt64Registers(uint8_t slaveID, uint16_t startAddress, uint16_t numRegisters, int64_t *responseBuffer) {
   uint8_t request[8];
@@ -203,7 +210,7 @@ bool readInt64Registers(uint8_t slaveID, uint16_t startAddress, uint16_t numRegi
   return false;
 }
 
-void processRegisters64(uint16_t *results, uint16_t numRegisters, const char* label) {
+void processInt64Registers(int64_t *results, uint16_t numRegisters, const char* label) {
   for (uint16_t i = 0; i < numRegisters; i += 4) {
     Serial.print(label);
     Serial.print(" Register ");
@@ -229,7 +236,7 @@ void processRegisters64(uint16_t *results, uint16_t numRegisters, const char* la
     Serial.print(": ");
     Serial.println(results[i + 3]);
 
-    //uint32_t combinedValue = combineAndSwap(results[i], results[i + 1]);
+    int64_t combinedValue = combineAndSwap64(results[i], results[i + 1], results[i + 2], results[i + 3]);
     //float value = convertToFloat(combinedValue);
     //Serial.print(label);
     //Serial.print(": ");
@@ -253,7 +260,7 @@ void loop() {
   //These variable are populated from the data read on Modbus, they are reused for different parameters, voltage, current, power, etc.
   uint16_t results[32];
   int64_t int64Results[2];
-  
+  /*
   // Read Serial number registers 70 and 71
   if (readHoldingRegisters(1, 0x46, 2, results)) { // 1 is the Modbus slave ID, adjust if necessary
     Serial.print("Register 70: ");
@@ -266,14 +273,15 @@ void loop() {
   } else {
     Serial.println("Error reading registers 70 and 71");
   }
-
-  // Read voltage on L1, L2, L3
-  if (readHoldingRegisters(1, 1010, 6, results)) { // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(results, 6, "Voltage");
+*/
+  // Read voltage on L1 //, L2, L3
+  if (readHoldingRegisters(1, 1010, 2, results)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(results, 2, "Voltage");
   } else {
     Serial.println("Error reading voltage registers");
   }
 
+/*
   // Read current on L1, L2, L3, and average current
   if (readHoldingRegisters(1, 1000, 8, results)) { // 1 is the Modbus slave ID, adjust if necessary
     processRegisters(results, 8, "Current");
@@ -281,24 +289,17 @@ void loop() {
     Serial.println("Error reading current registers");
   }
 
-
   // Read Power on L1, L2, L3
   if (readHoldingRegisters(1, 1036, 6, results)) { // 1 is the Modbus slave ID, adjust if necessary
     processRegisters(results, 6, "Power");
+  }
   } else {
     Serial.println("Error reading Power registers");
   }
-
-  // Read energy registers from 2500 to 2528. 64 Bit integer, 4 bytes, little endian
-  if (readInt64Registers(1, 2500, 16, int64Results)) { // 1 is the Modbus slave ID, adjust if necessary
-    Serial.print("Energy Register 0: ");
-    Serial.println(int64Results[0]);
-    Serial.print("Energy Register 1: ");
-    Serial.println(int64Results[1]);
-    Serial.print("Energy Register 2: ");
-    Serial.println(int64Results[2]);
-    Serial.print("Energy Register 3: ");
-    Serial.println(int64Results[3]);
+*/
+  // Read energy registers from 2500 to 2528. 64 Bit integer, 4 bytes, little endian, 4 x 4 = 16 bytes, 
+  if (readInt64Registers(1, 2500, 4, int64Results)) { // 1 is the Modbus slave ID, adjust if necessary
+    processInt64Registers(int64Results, 4, "Energy");
   } else {
     Serial.println("Error reading energy registers");
   }
