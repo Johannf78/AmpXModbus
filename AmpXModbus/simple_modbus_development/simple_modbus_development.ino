@@ -1,3 +1,4 @@
+
 //This library is required to use digital pins as a software serial port.
 #include <SoftwareSerial.h>
 //EspSoftwareSerial - Include this libarary.
@@ -5,7 +6,7 @@
 //Move the libary to the default location, or change the path to the correct location.
 //#include "D:\\OneDrive\\JF Data\\UserData\\Documents\\Arduino\\libraries\\AmpXModbusLibrary\\src\\AmpXModbus.h"
 //#include "D:\\OneDrive\\Dev\\Ardruino\\AmpX\\ESP32\\AmpXModbus\\AmpXModbus\\src\\AmpXModbus.h"
-//#include <AmpXModbus.h>
+//#include <AmpXModbus.h> 
 
 // Define the RS485 control pins
 #define MAX485_DE 4
@@ -30,7 +31,6 @@ uint16_t calculateCRC(uint8_t *buffer, uint8_t len) {
   }
   return crc;
 }
-
 
 void preTransmission() {
   digitalWrite(MAX485_RE_NEG, HIGH);
@@ -148,31 +148,17 @@ uint32_t combineAndSwap(uint16_t highWord, uint16_t lowWord) {
          ((combined & 0x000000FF) << 24);
 }
 
-uint64_t combineAndSwap64(uint16_t word1, uint16_t word2, uint16_t word3, uint16_t word4) {
-  uint64_t combined = ((uint64_t)word1 << 48) |
-                      ((uint64_t)word2 << 32) |
-                      ((uint64_t)word3 << 16) |
-                      (uint64_t)word4;
-
-  Serial.print("Combined: ");
-  Serial.println(combined, HEX);
-
-  uint64_t swapped = ((combined & 0xFF00000000000000) >> 56) |
-                     ((combined & 0x00FF000000000000) >> 40) |
-                     ((combined & 0x0000FF0000000000) >> 24) |
-                     ((combined & 0x000000FF00000000) >> 8)  |
-                     ((combined & 0x00000000FF000000) << 8)  |
-                     ((combined & 0x0000000000FF0000) << 24) |
-                     ((combined & 0x000000000000FF00) << 40) |
-                     ((combined & 0x00000000000000FF) << 56);
-
-  Serial.print("Swapped: ");
-  Serial.println(swapped, HEX);
-
-  return swapped;
+uint64_t combineAndSwap64(uint16_t reg0, uint16_t reg1, uint16_t reg2, uint16_t reg3) {
+  uint64_t combined = 0;
+  // Combine in reverse order for little endian
+  combined |= (uint64_t)reg3;
+  combined |= (uint64_t)reg2 << 16;
+  combined |= (uint64_t)reg1 << 32;
+  combined |= (uint64_t)reg0 << 48;
+  return combined;
 }
 
-bool readInt64Registers(uint8_t slaveID, uint16_t startAddress, uint16_t numRegisters, int64_t *responseBuffer) {
+bool readHoldingRegistersInt64(uint8_t slaveID, uint16_t startAddress, uint16_t numRegisters, int64_t *responseBuffer) {
   uint8_t request[8];
   request[0] = slaveID;
   request[1] = 0x03; // Function code for reading holding registers
@@ -211,7 +197,8 @@ bool readInt64Registers(uint8_t slaveID, uint16_t startAddress, uint16_t numRegi
   return false;
 }
 
-void processInt64Registers(int64_t *results, uint16_t numRegisters, const char* label) {
+
+void processRegistersInt64(int64_t *results, uint16_t numRegisters, const char* label) {
   for (uint16_t i = 0; i < numRegisters; i += 4) {
     Serial.print(label);
     Serial.print(" Register ");
@@ -239,9 +226,10 @@ void processInt64Registers(int64_t *results, uint16_t numRegisters, const char* 
 
     int64_t combinedValue = combineAndSwap64(results[i], results[i + 1], results[i + 2], results[i + 3]);
     //float value = convertToFloat(combinedValue);
-    //Serial.print(label);
-    //Serial.print(": ");
-    //Serial.println(value);
+    const char* label = "Energy";
+    Serial.print(label);
+    Serial.print(": ");
+    Serial.println(combinedValue);
   }
 }
 
@@ -299,8 +287,8 @@ void loop() {
   }
 */
   // Read energy registers from 2500 to 2528. 64 Bit integer, 4 bytes, little endian, 4 x 4 = 16 bytes, 2 Bytes per register 
-  if (readInt64Registers(1, 2500, 4, int64Results)) { // 1 is the Modbus slave ID, adjust if necessary
-    processInt64Registers(int64Results, 4, "Energy");
+  if (readHoldingRegistersInt64(1, 2500, 4, int64Results)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegistersInt64(int64Results, 4, "Energy");
   } else {
     Serial.println("Error reading energy registers");
   }

@@ -1,3 +1,6 @@
+/*
+Read 64-bit energy register from a Modbus slave device, using ModbusMaster library.
+*/
 #include <ModbusMaster.h>
 #include <SoftwareSerial.h>
 
