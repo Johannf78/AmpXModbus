@@ -1,7 +1,7 @@
 
 //This library is required to use digital pins as a software serial port.
 #include <SoftwareSerial.h>
-//EspSoftwareSerial - Include this libarary.
+//EspSoftwareSerial - Download and include this libarary.
 
 //Move the libary to the default location, or change the path to the correct location.
 //#include "D:\\OneDrive\\JF Data\\UserData\\Documents\\Arduino\\libraries\\AmpXModbusLibrary\\src\\AmpXModbus.h"
@@ -15,6 +15,16 @@
 #define TX_PIN 17
 
 SoftwareSerial modbusSerial(RX_PIN, TX_PIN);
+
+void preTransmission() {
+  digitalWrite(MAX485_RE_NEG, HIGH);
+  digitalWrite(MAX485_DE, HIGH);
+}
+
+void postTransmission() {
+  digitalWrite(MAX485_RE_NEG, LOW);
+  digitalWrite(MAX485_DE, LOW);
+}
 
 uint16_t calculateCRC(uint8_t *buffer, uint8_t len) {
   uint16_t crc = 0xFFFF;
@@ -30,16 +40,6 @@ uint16_t calculateCRC(uint8_t *buffer, uint8_t len) {
     }
   }
   return crc;
-}
-
-void preTransmission() {
-  digitalWrite(MAX485_RE_NEG, HIGH);
-  digitalWrite(MAX485_DE, HIGH);
-}
-
-void postTransmission() {
-  digitalWrite(MAX485_RE_NEG, LOW);
-  digitalWrite(MAX485_DE, LOW);
 }
 
 void sendRequest(uint8_t *request, uint8_t len) {
@@ -82,13 +82,14 @@ bool readHoldingRegisters(uint8_t slaveID, uint16_t startAddress, uint16_t numRe
   request[6] = lowByte(crc);
   request[7] = highByte(crc);
 
+  /*
   Serial.print("Sending request: ");
   for (int i = 0; i < 8; i++) {
     Serial.print(request[i], HEX);
     Serial.print(" ");
   }
   Serial.println();
-
+  */
   sendRequest(request, 8);
 
   uint8_t response[5 + 2 * numRegisters];
@@ -110,6 +111,7 @@ bool readHoldingRegisters(uint8_t slaveID, uint16_t startAddress, uint16_t numRe
 
 void processRegisters(uint16_t *results, uint16_t numRegisters, const char* label) {
   for (uint16_t i = 0; i < numRegisters; i += 2) {
+    /*
     Serial.print(label);
     Serial.print(" Register ");
     Serial.print(i);
@@ -120,6 +122,7 @@ void processRegisters(uint16_t *results, uint16_t numRegisters, const char* labe
     Serial.print(i + 1);
     Serial.print(": ");
     Serial.println(results[i + 1]);
+    */
     uint32_t combinedValue = combineAndSwap(results[i], results[i + 1]);
     float value = convertToFloat(combinedValue);
     Serial.print(label);
@@ -158,10 +161,10 @@ uint64_t combineAndSwap64(uint16_t reg0, uint16_t reg1, uint16_t reg2, uint16_t 
   return combined;
 }
 
-bool readHoldingRegistersInt64(uint8_t slaveID, uint16_t startAddress, uint16_t numRegisters, int64_t *responseBuffer) {
+bool readHoldingRegisters64(uint8_t slaveID, uint16_t startAddress, uint16_t numRegisters, uint16_t *responseBuffer) {
   uint8_t request[8];
   request[0] = slaveID;
-  request[1] = 0x03; // Function code for reading holding registers
+  request[1] = 0x03;
   request[2] = highByte(startAddress);
   request[3] = lowByte(startAddress);
   request[4] = highByte(numRegisters);
@@ -170,72 +173,63 @@ bool readHoldingRegistersInt64(uint8_t slaveID, uint16_t startAddress, uint16_t 
   request[6] = lowByte(crc);
   request[7] = highByte(crc);
 
-  Serial.print("Sending request: ");
-  for (int i = 0; i < 8; i++) {
-    Serial.print(request[i], HEX);
-    Serial.print(" ");
-  }
-  Serial.println();
-
-  sendRequest(request, 8);
+  preTransmission();
+  modbusSerial.write(request, 8);
+  modbusSerial.flush();
+  postTransmission();
 
   uint8_t response[5 + 2 * numRegisters];
-  if (receiveResponse(response, 5 + 2 * numRegisters)) {
-    for (uint16_t i = 0; i < numRegisters; i += 4) {
-      responseBuffer[i / 4] = ((int64_t)word(response[3 + 2 * i], response[4 + 2 * i]) << 32) |
-                              ((int64_t)word(response[3 + 2 * (i + 2)], response[4 + 2 * (i + 2)]));
+  uint32_t startTime = millis();
+  uint8_t index = 0;
+
+  while (millis() - startTime < 1000) {
+    if (modbusSerial.available()) {
+      response[index++] = modbusSerial.read();
+      if (index == sizeof(response)) {
+        uint16_t crc = calculateCRC(response, index - 2);
+        if (lowByte(crc) == response[index-2] && highByte(crc) == response[index-1]) {
+          for (uint8_t i = 0; i < numRegisters; i++) {
+            responseBuffer[i] = (response[3 + 2*i] << 8) | response[4 + 2*i];
+          }
+          return true;
+        }
+        break;
+      }
     }
-    return true;
-  } else {
-    Serial.print("Received response: ");
-    for (int i = 0; i < 5 + 2 * numRegisters; i++) {
-      Serial.print(response[i], HEX);
-      Serial.print(" ");
-    }
-    Serial.println();
   }
   return false;
 }
 
+void processRegistersInt64(uint16_t* responseBuffer, uint16_t numRegisters, const char* label) {
+    // Print registers in hex
+    /*
+    Serial.print("Registers (hex): ");
+    for(int i = 0; i < numRegisters; i++) {
+        Serial.print("0x");
+        Serial.print(responseBuffer[i], HEX);
+        Serial.print(" ");
+    }
+    Serial.println();
+    */
 
-void processRegistersInt64(int64_t *results, uint16_t numRegisters, const char* label) {
-  for (uint16_t i = 0; i < numRegisters; i += 4) {
-    Serial.print(label);
-    Serial.print(" Register ");
-    Serial.print(i);
-    Serial.print(": ");
-    Serial.println(results[i]);
-
-    Serial.print(label);
-    Serial.print(" Register ");
-    Serial.print(i + 1);
-    Serial.print(": ");
-    Serial.println(results[i + 1]);
-
-    Serial.print(label);
-    Serial.print(" Register ");
-    Serial.print(i + 2);
-    Serial.print(": ");
-    Serial.println(results[i + 2]);
-
-    Serial.print(label);
-    Serial.print(" Register ");
-    Serial.print(i + 3);
-    Serial.print(": ");
-    Serial.println(results[i + 3]);
-
-    int64_t combinedValue = combineAndSwap64(results[i], results[i + 1], results[i + 2], results[i + 3]);
-    //float value = convertToFloat(combinedValue);
-    const char* label = "Energy";
+    uint64_t value = combineAndSwap64(responseBuffer[0], responseBuffer[1], 
+                                     responseBuffer[2], responseBuffer[3]);
+    
+    /*
+    Serial.print("Energy: ");
+    Serial.println(value);
+    Serial.print("Energy (hex): 0x");
+    Serial.println((unsigned long)energy, HEX);
+    */
     Serial.print(label);
     Serial.print(": ");
-    Serial.println(combinedValue);
-  }
+    Serial.println(value);
 }
 
 void setup() {
   Serial.begin(9600);
   modbusSerial.begin(9600);
+  delay(500); //Just to give the serial ports some time to initialise.
   pinMode(MAX485_DE, OUTPUT);
   pinMode(MAX485_RE_NEG, OUTPUT);
   digitalWrite(MAX485_DE, LOW);
@@ -247,52 +241,122 @@ void setup() {
 
 void loop() {
   //These variable are populated from the data read on Modbus, they are reused for different parameters, voltage, current, power, etc.
-  uint16_t results[32];
-  int64_t int64Results[2];
-  /*
+ // uint16_t results[32];
+  uint16_t responseBuffer[4];
+
+ 
   // Read Serial number registers 70 and 71
-  if (readHoldingRegisters(1, 0x46, 2, results)) { // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(1, 0x46, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+  /*
     Serial.print("Register 70: ");
     Serial.println(results[0]);
     Serial.print("Register 71: ");
     Serial.println(results[1]);
-    uint32_t combinedValue = combineAndSwap(results[0], results[1]);
-    Serial.print("Combined and Swapped Value: ");
+    */
+    uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
+    Serial.print("Serial Number: ");
     Serial.println(combinedValue);
   } else {
     Serial.println("Error reading registers 70 and 71");
   }
-*/
-  // Read voltage on L1 //, L2, L3
-  if (readHoldingRegisters(1, 1010, 2, results)) { // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(results, 2, "Voltage");
+
+  // Read voltage on L1
+  if (readHoldingRegisters(1, 1010, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(responseBuffer, 2, "Voltage L1");
+  } else {
+    Serial.println("Error reading voltage registers");
+  }
+  // Read voltage on L2
+  if (readHoldingRegisters(1, 1012, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(responseBuffer, 2, "Voltage L2");
+  } else {
+    Serial.println("Error reading voltage registers");
+  }
+    // Read voltage on L3
+  if (readHoldingRegisters(1, 1014, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(responseBuffer, 2, "Voltage L3");
   } else {
     Serial.println("Error reading voltage registers");
   }
 
-/*
-  // Read current on L1, L2, L3, and average current
-  if (readHoldingRegisters(1, 1000, 8, results)) { // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(results, 8, "Current");
+
+  // Read current on L1
+  if (readHoldingRegisters(1, 1000, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(responseBuffer, 2, "Current L1");
+  } else {
+    Serial.println("Error reading current registers");
+  }
+  // Read current on L2
+  if (readHoldingRegisters(1, 1002, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(responseBuffer, 2, "Current L2");
+  } else {
+    Serial.println("Error reading current registers");
+  }
+ // Read current on L3
+  if (readHoldingRegisters(1, 1004, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(responseBuffer, 2, "Current L3");
+  } else {
+    Serial.println("Error reading current registers");
+  }
+  // Read current average
+  if (readHoldingRegisters(1, 1006, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(responseBuffer, 2, "Current Avg");
   } else {
     Serial.println("Error reading current registers");
   }
 
-  // Read Power on L1, L2, L3
-  if (readHoldingRegisters(1, 1036, 6, results)) { // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(results, 6, "Power");
-  }
+
+
+  // Read Active Power on L1
+  if (readHoldingRegisters(1, 1028, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(responseBuffer, 2, "Active Power L1");
   } else {
-    Serial.println("Error reading Power registers");
+    Serial.println("Error reading Active Power registers");
   }
-*/
-  // Read energy registers from 2500 to 2528. 64 Bit integer, 4 bytes, little endian, 4 x 4 = 16 bytes, 2 Bytes per register 
-  if (readHoldingRegistersInt64(1, 2500, 4, int64Results)) { // 1 is the Modbus slave ID, adjust if necessary
-    processRegistersInt64(int64Results, 4, "Energy");
+  // Read Active Power on L2
+  if (readHoldingRegisters(1, 1030, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(responseBuffer, 2, "Active Power L2");
   } else {
-    Serial.println("Error reading energy registers");
+    Serial.println("Error reading Active Power registers");
+  }
+  // Read Power on L3
+  if (readHoldingRegisters(1, 1032, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(responseBuffer, 2, "Active Power L3");
+  } else {
+    Serial.println("Error reading Active Power registers");
+  }
+  // Read Total Power
+  if (readHoldingRegisters(1, 1034, 2, responseBuffer)) { // 1 is the Modbus slave ID, adjust if necessary
+    processRegisters(responseBuffer, 2, "Active Power Total");
+  } else {
+    Serial.println("Error reading Active Power registers");
+  }
+
+  //Read Active Energy Imported L1
+ if (readHoldingRegisters64(1, 2500, 4, responseBuffer)) {
+    processRegistersInt64(responseBuffer, 4, "Energy Imported L1");
+  }else {
+    Serial.println("Error reading Active Energy registers");
+  }
+  //Read Active Energy Imported L2
+ if (readHoldingRegisters64(1, 2504, 4, responseBuffer)) {
+    processRegistersInt64(responseBuffer, 4, "Energy Imported L2");
+  }else {
+    Serial.println("Error reading Active Energy registers");
+  }
+ //Read Active Energy Imported L3
+ if (readHoldingRegisters64(1, 2508, 4, responseBuffer)) {
+    processRegistersInt64(responseBuffer, 4, "Energy Imported L3");
+  }else {
+    Serial.println("Error reading Active Energy registers");
+  }
+ //Read Active Energy Imported Total
+ if (readHoldingRegisters64(1, 2512, 4, responseBuffer)) {
+    processRegistersInt64(responseBuffer, 4, "Energy Imported Total");
+  }else {
+    Serial.println("Error reading Active Energy registers");
   }
 
   Serial.println(""); //Blank line to make it more readable.
-  delay(10000); // Wait for a second before the next read
+  delay(3000); // Wait for a second before the next read
 }
