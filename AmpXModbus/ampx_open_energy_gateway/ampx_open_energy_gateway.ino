@@ -1,14 +1,15 @@
+/*
+the file "ampx_modbus_functions.ino" should be in the same directory as this .ino file.
+It is automatically included and merged with this file.
+This just seperates all the modbus functions and make this file easier to read.
+*/
 
 //This library is required to use digital pins as a software serial port.
-//EspSoftwareSerial - Download and include this libarary.
+//EspSoftwareSerial - Download and include this libarary in the library manager.
 #include <SoftwareSerial.h>
 #include <WiFi.h>
 #include <WebServer.h>
 
-//Move the libary to the default location, or change the path to the correct location.
-//#include "D:\\OneDrive\\JF Data\\UserData\\Documents\\Arduino\\libraries\\AmpXModbusLibrary\\src\\AmpXModbus.h"
-//#include "D:\\OneDrive\\Dev\\Ardruino\\AmpX\\ESP32\\AmpXModbus\\AmpXModbus\\src\\AmpXModbus.h"
-//#include <AmpXModbus.h>
 
 // Define the RS485 control pins
 #define MAX485_DE 4
