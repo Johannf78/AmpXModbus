@@ -23,6 +23,8 @@ const char *ssid = "FRITZ!Family";
 const char *password = "03368098169909319946";
 
 float voltage_on_L1 = 0.f; // Voltage on L1
+float voltage_on_L2 = 0.f; // Voltage on L1
+float voltage_on_L3 = 0.f; // Voltage on L1
 
 WebServer server(HTTP);
 
@@ -101,24 +103,9 @@ void handleRoot() {
   //html += vol;
   String webpage = getWebpage();
   webpage.replace("voltage_on_L1", String(voltage_on_L1, 2));
+  webpage.replace("voltage_on_L2", String(voltage_on_L2, 2));
+  webpage.replace("voltage_on_L3", String(voltage_on_L3, 2));
   server.send(200, "text/html", webpage);
-}
-
-void setup() {
-  Serial.begin(9600);
-  modbusSerial.begin(9600);
-  delay(500);  //Just to give the serial ports some time to initialise.
-  pinMode(MAX485_DE, OUTPUT);
-  pinMode(MAX485_RE_NEG, OUTPUT);
-  digitalWrite(MAX485_DE, LOW);
-  digitalWrite(MAX485_RE_NEG, LOW);
-
-  // Debugging information
-  Serial.println("Setup complete. Starting communication...");
-
-  // Initialize WiFi
-  initWiFi();
-  initServer();
 }
 
 void handlePowerMeter() {
@@ -149,13 +136,13 @@ void handlePowerMeter() {
   }
   // Read voltage on L2
   if (readHoldingRegisters(1, 1012, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Voltage L2");
+    processRegisters(responseBuffer, 2, "Voltage L2", &voltage_on_L2);
   } else {
     Serial.println("Error reading voltage registers");
   }
   // Read voltage on L3
   if (readHoldingRegisters(1, 1014, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Voltage L3");
+    processRegisters(responseBuffer, 2, "Voltage L3", &voltage_on_L3);
   } else {
     Serial.println("Error reading voltage registers");
   }
@@ -239,9 +226,26 @@ void handlePowerMeter() {
   }
 }
 
+
+void setup() {
+  Serial.begin(9600);
+  modbusSerial.begin(9600);
+  delay(500);  //Just to give the serial ports some time to initialise.
+  pinMode(MAX485_DE, OUTPUT);
+  pinMode(MAX485_RE_NEG, OUTPUT);
+  digitalWrite(MAX485_DE, LOW);
+  digitalWrite(MAX485_RE_NEG, LOW);
+
+  // Debugging information
+  Serial.println("Setup complete. Starting communication...");
+
+  // Initialize WiFi
+  initWiFi();
+  initServer();
+}
+
 void loop() {
   static unsigned long t_ = 0;
-
   unsigned long t = millis();
 
   // Read the parameters every 3 seconds
