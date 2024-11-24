@@ -1,4 +1,7 @@
 /*
+Added external html file, where we find and replace the values in the string
+*/
+/*
 the file "ampx_modbus_functions.ino" should be in the same directory as this .ino file.
 It is automatically included and merged with this file.
 This just seperates all the modbus functions and make this file easier to read.
