@@ -9,6 +9,7 @@ This just seperates all the modbus functions and make this file easier to read.
 #include <SoftwareSerial.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <WebSocketsServer.h>
 #include "webpage.h"
 
 
@@ -29,7 +30,7 @@ float voltage_on_L3 = 0.f; // Voltage on L1
 String m1_serial_number = ""; // Meter one serial number
 
 WebServer server(HTTP);
-
+WebSocketsServer webSocket = WebSocketsServer(81);
 
 void processRegisters(uint16_t *results, uint16_t numRegisters, const char *label, float* v = NULL) {
   for (uint16_t i = 0; i < numRegisters; i += 2) {
@@ -97,6 +98,8 @@ void initWiFi() {
 void initServer() {
   server.on("/", handleRoot);
   server.begin();
+  //Initialise the websockets on port 81
+  webSocket.begin();
 }
 
 void handleRoot() {
@@ -106,9 +109,9 @@ void handleRoot() {
   //the String webpage has been defined in the included file webpage.h
   
   webpage.replace("m1_serial_number", m1_serial_number);
-  webpage.replace("voltage_on_L1", String(voltage_on_L1, 2));
-  webpage.replace("voltage_on_L2", String(voltage_on_L2, 2));
-  webpage.replace("voltage_on_L3", String(voltage_on_L3, 2));
+  webpage.replace("voltage_L1", String(voltage_on_L1, 2));
+  webpage.replace("voltage_L2", String(voltage_on_L2, 2));
+  webpage.replace("voltage_L3", String(voltage_on_L3, 2));
   server.send(200, "text/html", webpage);
 }
 
@@ -231,6 +234,15 @@ void handlePowerMeter() {
   }
 }
 
+void handleWebSocket()
+{
+  String str = "";
+  str = String(random(100));
+  int str_len = str.length() +1;
+  char char_array[str_len];
+  str.toCharArray(char_array, str_len);
+  webSocket.broadcastTXT(char_array);
+}
 
 void setup() {
   Serial.begin(9600);
@@ -246,19 +258,22 @@ void setup() {
 
   // Initialize WiFi
   initWiFi();
+  //Program will not continuen unless WiFi is connected..
   initServer();
 }
 
 void loop() {
-  static unsigned long t_ = 0;
-  unsigned long t = millis();
+  static unsigned long previousNow = 0;
+  unsigned long now = millis();
 
   // Read the parameters every 3 seconds
-  if (t - t_ > 3000) {
+  if (now - previousNow > 3000) {
     handlePowerMeter();
-    t_ = t;
+    handleWebSocket();
+    previousNow = now;
   }
 
-  //This function must run continuesly, so one can not include a delay in the main loop.
-  server.handleClient();
+  //These functions must run continuesly, so one can not include a delay in the main loop.
+  server.handleClient(); //Handle webserver requests from client
+  webSocket.loop();
 }
