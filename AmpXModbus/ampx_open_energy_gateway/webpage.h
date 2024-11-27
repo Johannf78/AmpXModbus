@@ -20,6 +20,8 @@ String webpage = R"(
     <h1>AmpX Open Energy Gateway</h1>
     
     <br/>
+    Meter: 1<br/>, Serial number: m1_serial_number
+
     <table>
     <tr>
       <th>Entity</th>
@@ -52,9 +54,3 @@ String webpage = R"(
 </body>
 </html>
   )";
-
-// Function to generate webpage content
-String getWebpage() {
-  //Raw string literal quotation  
-  return String(webpage);
-}

@@ -9,6 +9,7 @@ This just seperates all the modbus functions and make this file easier to read.
 #include <SoftwareSerial.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include "webpage.h"
 
 
 // Define the RS485 control pins
@@ -25,6 +26,7 @@ const char *password = "03368098169909319946";
 float voltage_on_L1 = 0.f; // Voltage on L1
 float voltage_on_L2 = 0.f; // Voltage on L1
 float voltage_on_L3 = 0.f; // Voltage on L1
+String m1_serial_number = ""; // Meter one serial number
 
 WebServer server(HTTP);
 
@@ -101,7 +103,9 @@ void handleRoot() {
   //String html = "<h1>AmpX Open Energy Gateway</h1>";
   //String vol = "<h1>Voltage on L1: " + String(voltage_on_L1, 2) + "(V)</h1>";
   //html += vol;
-  String webpage = getWebpage();
+  //the String webpage has been defined in the included file webpage.h
+  
+  webpage.replace("m1_serial_number", m1_serial_number);
   webpage.replace("voltage_on_L1", String(voltage_on_L1, 2));
   webpage.replace("voltage_on_L2", String(voltage_on_L2, 2));
   webpage.replace("voltage_on_L3", String(voltage_on_L3, 2));
@@ -124,6 +128,7 @@ void handlePowerMeter() {
     uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
     Serial.print("Serial Number: ");
     Serial.println(combinedValue);
+    m1_serial_number = combinedValue;
   } else {
     Serial.println("Error reading registers 70 and 71");
   }
