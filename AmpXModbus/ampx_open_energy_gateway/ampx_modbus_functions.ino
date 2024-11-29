@@ -26,8 +26,8 @@ uint16_t calculateCRC(uint8_t *buffer, uint8_t len) {
 
 void sendRequest(uint8_t *request, uint8_t len) {
   preTransmission();
-  modbusSerial.write(request, len);
-  modbusSerial.flush();
+  Serial2.write(request, len);
+  Serial2.flush();
   postTransmission();
 }
 
@@ -35,8 +35,8 @@ bool receiveResponse(uint8_t *response, uint8_t len) {
   uint32_t startTime = millis();
   uint8_t index = 0;
   while (millis() - startTime < 1000) {  // 1 second timeout
-    if (modbusSerial.available()) {
-      response[index++] = modbusSerial.read();
+    if (Serial2.available()) {
+      response[index++] = Serial2.read();
       if (index == len) {
         uint16_t crc = calculateCRC(response, len - 2);
         if (lowByte(crc) == response[len - 2] && highByte(crc) == response[len - 1]) {
@@ -132,8 +132,8 @@ bool readHoldingRegisters64(uint8_t slaveID, uint16_t startAddress, uint16_t num
   request[7] = highByte(crc);
 
   preTransmission();
-  modbusSerial.write(request, 8);
-  modbusSerial.flush();
+  Serial2.write(request, 8);
+  Serial2.flush();
   postTransmission();
 
   uint8_t response[5 + 2 * numRegisters];
@@ -141,8 +141,8 @@ bool readHoldingRegisters64(uint8_t slaveID, uint16_t startAddress, uint16_t num
   uint8_t index = 0;
 
   while (millis() - startTime < 1000) {
-    if (modbusSerial.available()) {
-      response[index++] = modbusSerial.read();
+    if (Serial2.available()) {
+      response[index++] = Serial2.read();
       if (index == sizeof(response)) {
         uint16_t crc = calculateCRC(response, index - 2);
         if (lowByte(crc) == response[index - 2] && highByte(crc) == response[index - 1]) {

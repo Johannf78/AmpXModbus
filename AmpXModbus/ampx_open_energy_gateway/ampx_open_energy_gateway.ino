@@ -4,16 +4,16 @@ It is automatically included and merged with this file.
 This just seperates all the modbus functions and make this file easier to read.
 */
 
-//This library is required to use digital pins as a software serial port.
-//EspSoftwareSerial - Download and include this libarary in the library manager.
-#include <SoftwareSerial.h>
+
 #include <WiFi.h>
 #include <WebServer.h>
 //Search for Arduino Websockets, install the one by Markus Sattler
 #include <WebSocketsServer.h>
 #include "webpage.h"
+//Search for ArduinoJson, install the one by Benoit Blanchon
 #include <ArduinoJson.h>
 
+//The JSonDocument is used to send data to the websocket.
 JsonDocument doc;
 
 // Define the RS485 control pins
@@ -23,13 +23,9 @@ JsonDocument doc;
 #define TX_PIN 17
 #define HTTP 80
 
-SoftwareSerial modbusSerial(RX_PIN, TX_PIN);
 const char* ssid = "FRITZ!Family";
 const char* password = "03368098169909319946";
 
-float voltage_on_L1 = 0.f;     // Voltage on L1
-float voltage_on_L2 = 0.f;     // Voltage on L1
-float voltage_on_L3 = 0.f;     // Voltage on L1
 String m1_serial_number = "";  // Meter one serial number
 
 WebServer server(HTTP);
@@ -249,13 +245,15 @@ void handleWebSocket() {
 }
 
 void setup() {
-  Serial.begin(9600);
-  modbusSerial.begin(9600);
+  Serial.begin(9600); // Debug serial
+  Serial2.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);  // Modbus serial, 
+  //SERIAL_8N1: configuration for serial communication. 8: 8 data bits, N: No parity bit, 1: 1 stop bit
   delay(500);  //Just to give the serial ports some time to initialise.
+
   pinMode(MAX485_DE, OUTPUT);
   pinMode(MAX485_RE_NEG, OUTPUT);
-  digitalWrite(MAX485_DE, LOW);
-  digitalWrite(MAX485_RE_NEG, LOW);
+  digitalWrite(MAX485_DE, LOW); //Disables the RS485 driver.
+  digitalWrite(MAX485_RE_NEG, LOW); // Enables the RS485 receiver.
 
   // Debugging information
   Serial.println("Setup complete. Starting communication...");

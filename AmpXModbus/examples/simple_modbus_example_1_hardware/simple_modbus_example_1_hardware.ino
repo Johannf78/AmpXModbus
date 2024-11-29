@@ -19,7 +19,8 @@ ampx_modbus_functions.ino is automatically included as it is in the same folder 
 void setup() {
   Serial.begin(9600); // Debug serial
   //modbusSerial.begin(9600);
-  Serial2.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);  // Modbus serial
+  Serial2.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);  // Modbus serial, 
+  //SERIAL_8N1: configuration for serial communication. 8: 8 data bits, N: No parity bit, 1: 1 stop bit
   pinMode(MAX485_DE, OUTPUT);
   pinMode(MAX485_RE_NEG, OUTPUT);
   digitalWrite(MAX485_DE, LOW); //Disables the RS485 driver.
