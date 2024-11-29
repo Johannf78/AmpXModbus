@@ -130,18 +130,7 @@ void processRegisters(uint16_t *results, uint16_t numRegisters, const char* labe
     Serial.println(value);
   }
 }
-
-float convertToFloat(uint32_t value) {
-  float result;
-  uint8_t *valuePtr = (uint8_t *)&value;
-  uint8_t swapped[4];
-  swapped[0] = valuePtr[3];
-  swapped[1] = valuePtr[2];
-  swapped[2] = valuePtr[1];
-  swapped[3] = valuePtr[0];
-  memcpy(&result, swapped, sizeof(result));
-  return result;
-}
+c
 
 uint32_t combineAndSwap(uint16_t highWord, uint16_t lowWord) {
   uint32_t combined = ((uint32_t)highWord << 16) | lowWord;
