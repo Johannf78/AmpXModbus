@@ -33,31 +33,31 @@ String webpage = R"(
     </tr>
     <tr>
       <td class='text-align-left'>Voltage</td>
-      <td id='voltage_L1'>voltage_L1 V</td>
-      <td id='voltage_L2'>voltage_L2 V</td>
-      <td id='voltage_L3'>voltage_L3 V</td>
+      <td id='voltage_L1'>0.00 V</td>
+      <td id='voltage_L2'>0.00 V</td>
+      <td id='voltage_L3'>0.00 V</td>
       <td></td>
     </tr>
     <tr>
       <td class='text-align-left'>Current</td>
-      <td id='current_L1'>current_L1 A</td>
-      <td id='current_L2'>current_L2 A</td>
-      <td id='current_L3'>current_L3 A</td>
-      <td id='current_avg'>current_avg A</td>
+      <td id='current_L1'>0.00 A</td>
+      <td id='current_L2'>0.00 A</td>
+      <td id='current_L3'>0.00 A</td>
+      <td id='current_avg'>0.00 A</td>
     </tr>
     <tr>
       <td class='text-align-left'>Active Power</td>
-      <td id='active_power_L1'>active_power_L1 W</td>
-      <td id='active_power_L2'>active_power_L2 W</td>
-      <td id='active_power_L3'>active_power_L3 W</td>
-      <td id='active_power_tot'>active_power_tot W</td>
+      <td id='active_power_L1'>0.00 KW</td>
+      <td id='active_power_L2'>0.00 KW</td>
+      <td id='active_power_L3'>0.00 KW</td>
+      <td id='active_power_tot'>0.00 KW</td>
     </tr>
     <tr>
       <td class='text-align-left'>Active Energy Imported</td>
-      <td id='active_energy_imported_L1'>active_energy_imported_L1 Wh</td>
-      <td id='active_energy_imported_L2'>active_energy_imported_L2 Wh</td>
-      <td id='active_energy_imported_L3'>active_energy_imported_L3 Wh</td>
-      <td id='active_energy_imported_tot'>active_energy_imported_tot Wh</td>
+      <td id='active_energy_imported_L1'>0 kWh</td>
+      <td id='active_energy_imported_L2'>0 kWh</td>
+      <td id='active_energy_imported_L3'>0 kWh</td>
+      <td id='active_energy_imported_tot'>0 kWh</td>
     </tr>
     </table>
   </main>
@@ -75,9 +75,24 @@ String webpage = R"(
     };
   }
   function processCommand(event){
-    document.getElementById('test').innerHTML = event.data;
-    document.getElementById('current_L1').innerHTML = event.data;
-    console.log(event.data);
+    var data = JSON.parse(event.data);
+
+    if (data) {
+      for (let key in data) {
+        let value = data[key];
+        
+        if (key.includes('voltage'))
+          value += ' V';
+        else if (key.includes('current'))
+          value += ' A';
+        else if (key.includes('power'))
+          value += ' kW';
+        else if (key.includes('energy'))
+          value += ' kWh';
+
+        document.getElementById(key).innerHTML = value;
+      }
+    }
   }
   window.onload = function(event){
     init();
