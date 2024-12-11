@@ -263,23 +263,23 @@ void handleWebSocket() {
 }
 
 void postToRemoteServer() { 
-  int test_power1 = random(100);
-  int test_power2 = random(100);
-  int test_power3 = random(100);
-  int test_powert = random(100);
+  int test_power1 = random(1000);
+  int test_power2 = random(1000);
+  int test_power3 = random(1000);
+  int test_powert = random(1000);
 
   String valuesString ="";
   valuesString = "power1:" + String(test_power1);
   valuesString += ",power2:" + String(test_power2);
   valuesString += ",power3:" + String(test_power3);
   valuesString += ",powert:" + String(test_powert);
-  Serial.println("valuesString:  " + valuesString);
+//  Serial.println("valuesString:  " + valuesString);
 
   String valuesString2 ="";
-  valuesString2 = "power1:" + String(test_power1);
-  valuesString2 += ",power2:" + String(test_power2);
-  valuesString2 += ",power3:" + String(test_power3);
-  valuesString2 += ",powert:" + String(test_powert);
+  valuesString2 = "power1:" + String(JsonDoc["active_power_L1"]);
+  valuesString2 += ",power2:" + String(JsonDoc["active_power_L2"]);
+  valuesString2 += ",power3:" + String(JsonDoc["active_power_L3"]);
+  valuesString2 += ",powert:" + String(JsonDoc["active_power_tot"]);
   Serial.println("valuesString2:  " + valuesString);
 
   if (WiFi.status() == WL_CONNECTED) {
@@ -290,8 +290,9 @@ void postToRemoteServer() {
     //Test with fixed values
     //url += "power1:100,power2:200,power3:300";
     //Test with random values
-    url += valuesString;
-    //
+    //url += valuesString;
+    //Test with actual values
+    url += valuesString2;
     url += "}&apikey=" + String(api_key);
     Serial.println(url);
 
@@ -328,7 +329,7 @@ void setup() {
 
   // Initialize WiFi
   initWiFi();
-  //Program will not continuen unless WiFi is connected..
+  //Program will not continue unless WiFi is connected..
   initServer();
 }
 
@@ -344,7 +345,7 @@ void loop() {
     counter1 = now;
   }
 
-  // Post meter data to remote server every 60 seconds
+  // Post meter data to remote server every 6 seconds
   if (now - counter2 > 6000) {
     //Post meter data to remote server
     postToRemoteServer();
