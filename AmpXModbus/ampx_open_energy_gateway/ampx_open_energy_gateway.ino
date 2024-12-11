@@ -7,14 +7,16 @@ This just seperates all the modbus functions and make this file easier to read.
 
 #include <WiFi.h>
 #include <WebServer.h>
+#include <HTTPClient.h>
 //Search for Arduino Websockets, install the one by Markus Sattler
 #include <WebSocketsServer.h>
+//The HTML code is stored in a seperate file, this makes the code easier to read.
 #include "webpage.h"
 //Search for ArduinoJson, install the one by Benoit Blanchon
 #include <ArduinoJson.h>
 
 //The JSonDocument is used to send data to the websocket.
-JsonDocument doc;
+JsonDocument JsonDoc;
 
 // Define the RS485 control pins
 #define MAX485_DE 4
@@ -23,8 +25,15 @@ JsonDocument doc;
 #define TX_PIN 17
 #define HTTP 80
 
-const char* ssid = "FRITZ!Family";
-const char* password = "03368098169909319946";
+//const char* ssid = "FRITZ!Family";
+//const char* password = "03368098169909319946";
+
+const char* ssid = "Poly";
+const char* password = "polypassword";
+
+//EMONCMS, Remote energy logging, https://JsonDocs.openenergymonitor.org/emoncms/index.html
+const char* emoncms_server = "http://emoncms.org";
+const char* api_key = "c0526f06893d1063800d3bb966927711"; //your_API_KEY
 
 String m1_serial_number = "";  // Meter one serial number
 
@@ -49,11 +58,14 @@ void processRegisters(uint16_t* results, uint16_t numRegisters,
     uint32_t combinedValue = combineAndSwap(results[i], results[i + 1]);
 
     float value = convertToFloat(combinedValue);
-    doc[docLabel] = String(value, 2);
 
-    Serial.print(friendlyLabel);
-    Serial.print(": ");
-    Serial.println(value);
+    //Update the json document with the value
+    JsonDoc[docLabel] = String(value, 2);
+
+
+    //Serial.print(friendlyLabel);
+    //Serial.print(": ");
+    //Serial.println(value);
   }
 }
 
@@ -80,11 +92,12 @@ void processRegistersInt64(uint16_t* responseBuffer, uint16_t numRegisters,
     Serial.println((unsigned long)energy, HEX);
     */
 
-  doc[docLabel] = String((float)value / 1000, 2);
+  //Update the json document with the value
+  JsonDoc[docLabel] = String((float)value / 1000, 2);
 
-  Serial.print(friendlyLabel);
-  Serial.print(": ");
-  Serial.println(value);
+  //Serial.print(friendlyLabel);
+  //Serial.print(": ");
+  //Serial.println(value);
 }
 
 void initWiFi() {
@@ -242,10 +255,61 @@ void handlePowerMeter() {
 }
 
 void handleWebSocket() {
-  String str;
+  String JsonString;
 
-  serializeJson(doc, str);
-  webSocket.broadcastTXT(str);
+  serializeJson(JsonDoc, JsonString);
+  //Send the JSON document to the websocket.
+  webSocket.broadcastTXT(JsonString);
+}
+
+void postToRemoteServer() { 
+  int test_power1 = random(100);
+  int test_power2 = random(100);
+  int test_power3 = random(100);
+  int test_powert = random(100);
+
+  String valuesString ="";
+  valuesString = "power1:" + String(test_power1);
+  valuesString += ",power2:" + String(test_power2);
+  valuesString += ",power3:" + String(test_power3);
+  valuesString += ",powert:" + String(test_powert);
+  Serial.println("valuesString:  " + valuesString);
+
+  String valuesString2 ="";
+  valuesString2 = "power1:" + String(test_power1);
+  valuesString2 += ",power2:" + String(test_power2);
+  valuesString2 += ",power3:" + String(test_power3);
+  valuesString2 += ",powert:" + String(test_powert);
+  Serial.println("valuesString2:  " + valuesString);
+
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    String url = "";
+    url = String(emoncms_server);
+    url += "/input/post?node=1&json={";
+    //Test with fixed values
+    //url += "power1:100,power2:200,power3:300";
+    //Test with random values
+    url += valuesString;
+    //
+    url += "}&apikey=" + String(api_key);
+    Serial.println(url);
+
+
+    http.begin(url);
+    int httpResponseCode = http.GET();
+    if (httpResponseCode > 0) {
+      String response = http.getString();
+      Serial.println(httpResponseCode);
+      Serial.println(response);
+    } else {
+      Serial.print("Error on sending POST: ");
+      Serial.println(httpResponseCode);
+    }
+    http.end();
+  } else {
+    Serial.println("WiFi Disconnected");
+  }
 }
 
 void setup() {
@@ -269,15 +333,24 @@ void setup() {
 }
 
 void loop() {
-  static unsigned long previousNow = 0;
+  static unsigned long counter1 = 0;
+  static unsigned long counter2 = 0;
   unsigned long now = millis();
 
   // Read the parameters every 3 seconds
-  if (now - previousNow > 3000) {
+  if (now - counter1 > 3000) {
     handlePowerMeter();
     handleWebSocket();
-    previousNow = now;
+    counter1 = now;
   }
+
+  // Post meter data to remote server every 60 seconds
+  if (now - counter2 > 6000) {
+    //Post meter data to remote server
+    postToRemoteServer();
+    counter2 = now;
+  }
+
 
   //These functions must run continuesly, so one can not include a delay in the main loop.
   server.handleClient();  //Handle webserver requests from client
