@@ -36,6 +36,9 @@ const char* emoncms_server = "http://emoncms.org";
 const char* api_key = "c0526f06893d1063800d3bb966927711"; //your_API_KEY
 
 String m1_serial_number = "";  // Meter one serial number
+String m2_serial_number = "";  // Meter one serial number
+int numberOfMeters = 2;  // Number of meters connected, this needs to be adjusted if more meters are connected.
+
 
 WebServer server(HTTP);
 WebSocketsServer webSocket = WebSocketsServer(81);
@@ -134,45 +137,57 @@ void handleRoot() {
   server.send(200, "text/html", webpage);
 }
 
-void handlePowerMeter() {
+void handlePowerMeter(int meterNumber = 1) {
   //These variable are populated from the data read on Modbus, they are reused for different parameters, voltage, current, power, etc.
   // uint16_t results[32];
   uint16_t responseBuffer[4];
   float value;
-  int meterNumber = 1;
+
   String meterPrefix = "m" + String(meterNumber) + "_";
 
 
   // Read Serial number registers 70 and 71
   if (readHoldingRegisters(1, 70, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-                                                         /*
-      Serial.print("Register 70: ");
+      /*Serial.print("Register 70: ");
       Serial.println(responseBuffer[0]);
       Serial.print("Register 71: ");
-      Serial.println(responseBuffer[1]);
-      */
+      Serial.println(responseBuffer[1]);*/
     uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
-    Serial.print("Serial Number: ");
+    Serial.print("Serial Number1: ");
     Serial.println(combinedValue);
     m1_serial_number = combinedValue;
   } else {
     Serial.println("Error reading registers 70 and 71");
   }
 
+    // Read Serial number registers 70 and 71
+  if (readHoldingRegisters(2, 70, 2, responseBuffer)) {  // 2 is the Modbus slave ID, adjust if necessary
+      /*Serial.print("Register 70: ");
+      Serial.println(responseBuffer[0]);
+      Serial.print("Register 71: ");
+      Serial.println(responseBuffer[1]);*/
+    uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
+    Serial.print("Serial Number2: ");
+    Serial.println(combinedValue);
+    m2_serial_number = combinedValue;
+  } else {
+    Serial.println("Error reading registers 70 and 71");
+  }
+
   // Read voltage on L1
-  if (readHoldingRegisters(1, 1010, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(meterNumber, 1010, 2, responseBuffer)) { // meterNumber is the Modbus slave ID
     processRegisters(responseBuffer, 2, "Voltage L1", meterPrefix + "voltage_L1");
   } else {
     Serial.println("Error reading voltage registers");
   }
   // Read voltage on L2
-  if (readHoldingRegisters(1, 1012, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(meterNumber, 1012, 2, responseBuffer)) {  // meterNumber is the Modbus slave ID
     processRegisters(responseBuffer, 2, "Voltage L2", meterPrefix + "voltage_L2");
   } else {
     Serial.println("Error reading voltage registers");
   }
   // Read voltage on L3
-  if (readHoldingRegisters(1, 1014, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(meterNumber, 1014, 2, responseBuffer)) { 
     processRegisters(responseBuffer, 2, "Voltage L3", meterPrefix + "voltage_L3");
   } else {
     Serial.println("Error reading voltage registers");
@@ -180,25 +195,25 @@ void handlePowerMeter() {
 
 
   // Read current on L1
-  if (readHoldingRegisters(1, 1000, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(meterNumber, 1000, 2, responseBuffer)) { 
     processRegisters(responseBuffer, 2, "Current L1", meterPrefix + "current_L1");
   } else {
     Serial.println("Error reading current registers");
   }
   // Read current on L2
-  if (readHoldingRegisters(1, 1002, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(meterNumber, 1002, 2, responseBuffer)) { 
     processRegisters(responseBuffer, 2, "Current L2", meterPrefix + "current_L2");
   } else {
     Serial.println("Error reading current registers");
   }
   // Read current on L3
-  if (readHoldingRegisters(1, 1004, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(meterNumber, 1004, 2, responseBuffer)) {
     processRegisters(responseBuffer, 2, "Current L3", meterPrefix + "current_L3");
   } else {
     Serial.println("Error reading current registers");
   }
   // Read current average
-  if (readHoldingRegisters(1, 1006, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(meterNumber, 1006, 2, responseBuffer)) {
     processRegisters(responseBuffer, 2, "Current Avg", meterPrefix + "current_avg");
   } else {
     Serial.println("Error reading current registers");
@@ -207,50 +222,50 @@ void handlePowerMeter() {
 
 
   // Read Active Power on L1
-  if (readHoldingRegisters(1, 1028, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(meterNumber, 1028, 2, responseBuffer)) { 
     processRegisters(responseBuffer, 2, "Active Power L1", meterPrefix + "active_power_L1");
   } else {
     Serial.println("Error reading Active Power registers");
   }
   // Read Active Power on L2
-  if (readHoldingRegisters(1, 1030, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(meterNumber, 1030, 2, responseBuffer)) { 
     processRegisters(responseBuffer, 2, "Active Power L2", meterPrefix + "active_power_L2");
   } else {
     Serial.println("Error reading Active Power registers");
   }
   // Read Power on L3
-  if (readHoldingRegisters(1, 1032, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(meterNumber, 1032, 2, responseBuffer)) { 
     processRegisters(responseBuffer, 2, "Active Power L3", meterPrefix + "active_power_L3");
   } else {
     Serial.println("Error reading Active Power registers");
   }
   // Read Total Power
-  if (readHoldingRegisters(1, 1034, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
+  if (readHoldingRegisters(meterNumber, 1034, 2, responseBuffer)) { 
     processRegisters(responseBuffer, 2, "Active Power Total", meterPrefix + "active_power_tot");
   } else {
     Serial.println("Error reading Active Power registers");
   }
 
   //Read Active Energy Imported L1
-  if (readHoldingRegisters64(1, 2500, 4, responseBuffer)) {
+  if (readHoldingRegisters64(meterNumber, 2500, 4, responseBuffer)) {
     processRegistersInt64(responseBuffer, 4, "Energy Imported L1", meterPrefix + "active_energy_imported_L1");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
   //Read Active Energy Imported L2
-  if (readHoldingRegisters64(1, 2504, 4, responseBuffer)) {
+  if (readHoldingRegisters64(meterNumber, 2504, 4, responseBuffer)) {
     processRegistersInt64(responseBuffer, 4, "Energy Imported L2", meterPrefix + "active_energy_imported_L2");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
   //Read Active Energy Imported L3
-  if (readHoldingRegisters64(1, 2508, 4, responseBuffer)) {
+  if (readHoldingRegisters64(meterNumber, 2508, 4, responseBuffer)) {
     processRegistersInt64(responseBuffer, 4, "Energy Imported L3", meterPrefix + "active_energy_imported_L3");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
   //Read Active Energy Imported Total
-  if (readHoldingRegisters64(1, 2512, 4, responseBuffer)) {
+  if (readHoldingRegisters64(meterNumber, 2512, 4, responseBuffer)) {
     processRegistersInt64(responseBuffer, 4, "Energy Imported Total", meterPrefix + "active_energy_imported_tot");
   } else {
     Serial.println("Error reading Active Energy registers");
@@ -343,7 +358,9 @@ void loop() {
 
   // Read the parameters every 3 seconds
   if (now - counter1 > 3000) {
-    handlePowerMeter();
+    for (int i = 1; i <= numberOfMeters; i++) {
+      handlePowerMeter(i); //Pass the meter number to the function.
+    }
     handleWebSocket();
     counter1 = now;
   }
