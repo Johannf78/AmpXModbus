@@ -23,7 +23,6 @@ String webpage = R"(
   <br/>
   <div id='meter1'>
     <h3>Meter: 1, Serial number: m1_serial_number</h3>
-    Test: <span id='test'>--</span>
     <table>
     <tr>
       <th>Entity</th>
@@ -66,7 +65,6 @@ String webpage = R"(
   <br/>
   <div id='meter2'>
     <h3>Meter: 2, Serial number: m2_serial_number</h3>
-    Test: <span id='test'>--</span>
     <table>
     <tr>
       <th>Entity</th>
@@ -106,6 +104,92 @@ String webpage = R"(
     </table>
   </div>
 
+  <br/>
+  <div id='meter3'>
+    <h3>Meter: 3, Serial number: m3_serial_number</h3>
+    <table>
+    <tr>
+      <th>Entity</th>
+      <th>L1</th>
+      <th>L2</<th>
+      <th>L3</<th>
+      <th>Avg/Max</<th>
+    </tr>
+    <tr>
+      <td class='text-align-left'>Voltage</td>
+      <td id='m3_voltage_L1'>0.00 V</td>
+      <td id='m3_voltage_L2'>0.00 V</td>
+      <td id='m3_voltage_L3'>0.00 V</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class='text-align-left'>Current</td>
+      <td id='m3_current_L1'>0.00 A</td>
+      <td id='m3_current_L2'>0.00 A</td>
+      <td id='m3_current_L3'>0.00 A</td>
+      <td id='m3_current_avg'>0.00 A</td>
+    </tr>
+    <tr>
+      <td class='text-align-left'>Active Power</td>
+      <td id='m3_active_power_L1'>0.00 KW</td>
+      <td id='m3_active_power_L2'>0.00 KW</td>
+      <td id='m3_active_power_L3'>0.00 KW</td>
+      <td id='m3_active_power_tot'>0.00 KW</td>
+    </tr>
+    <tr>
+      <td class='text-align-left'>Active Energy Imported</td>
+      <td id='m3_active_energy_imported_L1'>0 kWh</td>
+      <td id='m3_active_energy_imported_L2'>0 kWh</td>
+      <td id='m3_active_energy_imported_L3'>0 kWh</td>
+      <td id='m3_active_energy_imported_tot'>0 kWh</td>
+    </tr>
+    </table>
+  </div>
+
+
+  <br/>
+  <div id='meter4'>
+    <h3>Meter: 4, Serial number: m4_serial_number</h3>
+    <table>
+    <tr>
+      <th>Entity</th>
+      <th>L1</th>
+      <th>L2</<th>
+      <th>L3</<th>
+      <th>Avg/Max</<th>
+    </tr>
+    <tr>
+      <td class='text-align-left'>Voltage</td>
+      <td id='m4_voltage_L1'>0.00 V</td>
+      <td id='m4_voltage_L2'>0.00 V</td>
+      <td id='m4_voltage_L3'>0.00 V</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class='text-align-left'>Current</td>
+      <td id='m4_current_L1'>0.00 A</td>
+      <td id='m4_current_L2'>0.00 A</td>
+      <td id='m4_current_L3'>0.00 A</td>
+      <td id='m4_current_avg'>0.00 A</td>
+    </tr>
+    <tr>
+      <td class='text-align-left'>Active Power</td>
+      <td id='m4_active_power_L1'>0.00 KW</td>
+      <td id='m4_active_power_L2'>0.00 KW</td>
+      <td id='m4_active_power_L3'>0.00 KW</td>
+      <td id='m4_active_power_tot'>0.00 KW</td>
+    </tr>
+    <tr>
+      <td class='text-align-left'>Active Energy Imported</td>
+      <td id='m4_active_energy_imported_L1'>0 kWh</td>
+      <td id='m4_active_energy_imported_L2'>0 kWh</td>
+      <td id='m4_active_energy_imported_L3'>0 kWh</td>
+      <td id='m4_active_energy_imported_tot'>0 kWh</td>
+    </tr>
+    </table>
+  </div>
+
+<p>Values updates every 3 seconds.</p>
 
 </main>
 <footer>
@@ -116,10 +200,26 @@ String webpage = R"(
 <script>
   var socket;
   function init(){
+    //This variable is updated by the Arduino code befor sending the HTML
+    var numberOfMeters = numberOfMetersValue; // Define the number of meters as an integer
+  
+      // Hide the div with id 'meter2', 'meter3', and 'meter4' based on the numberOfMeters
+    if (numberOfMeters == 1) {
+        document.getElementById('meter2').style.display = 'none';
+        document.getElementById('meter3').style.display = 'none';
+        document.getElementById('meter4').style.display = 'none';
+    } else if (numberOfMeters == 2) {
+        document.getElementById('meter3').style.display = 'none';
+        document.getElementById('meter4').style.display = 'none';
+    } else if (numberOfMeters == 3) {
+        document.getElementById('meter4').style.display = 'none';
+    }
+
     socket = new WebSocket('ws://' + window.location.hostname + ':81/');
     socket.onmessage = function(event) {
       processCommand(event);
     };
+
   }
   function processCommand(event){
     var data = JSON.parse(event.data);

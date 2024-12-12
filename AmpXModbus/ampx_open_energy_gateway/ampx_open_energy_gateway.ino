@@ -28,8 +28,11 @@ JsonDocument JsonDoc;
 //const char* ssid = "FRITZ!Family";
 //const char* password = "03368098169909319946";
 
-const char* ssid = "Poly";
-const char* password = "polypassword";
+//const char* ssid = "Poly";
+//const char* password = "polypassword";
+
+const char* ssid = "RUT901";
+const char* password = "d9U8DyWb";
 
 //EMONCMS, Remote energy logging, https://JsonDocs.openenergymonitor.org/emoncms/index.html
 const char* emoncms_server = "http://emoncms.org";
@@ -37,7 +40,7 @@ const char* api_key = "c0526f06893d1063800d3bb966927711"; //your_API_KEY
 
 String m1_serial_number = "";  // Meter one serial number
 String m2_serial_number = "";  // Meter one serial number
-int numberOfMeters = 2;  // Number of meters connected, this needs to be adjusted if more meters are connected.
+int numberOfMeters = 1;  // Number of meters connected, this needs to be adjusted if more meters are connected.
 
 
 WebServer server(HTTP);
@@ -133,7 +136,11 @@ void handleRoot() {
   //html += vol;
   //the String webpage has been defined in the included file webpage.h
 
+  //Repalce the string m1_serial_number with the actual serial number, done here as it does not update regularly like values.
   webpage.replace("m1_serial_number", m1_serial_number);
+  webpage.replace("m2_serial_number", m2_serial_number);
+  webpage.replace("numberOfMetersValue", String(numberOfMeters));
+
   server.send(200, "text/html", webpage);
 }
 
@@ -153,8 +160,8 @@ void handlePowerMeter(int meterNumber = 1) {
       Serial.print("Register 71: ");
       Serial.println(responseBuffer[1]);*/
     uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
-    Serial.print("Serial Number1: ");
-    Serial.println(combinedValue);
+    //Serial.print("Serial Number1: ");
+    //Serial.println(combinedValue);
     m1_serial_number = combinedValue;
   } else {
     Serial.println("Error reading registers 70 and 71");
@@ -167,8 +174,8 @@ void handlePowerMeter(int meterNumber = 1) {
       Serial.print("Register 71: ");
       Serial.println(responseBuffer[1]);*/
     uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
-    Serial.print("Serial Number2: ");
-    Serial.println(combinedValue);
+    //Serial.print("Serial Number2: ");
+    //Serial.println(combinedValue);
     m2_serial_number = combinedValue;
   } else {
     Serial.println("Error reading registers 70 and 71");
@@ -278,9 +285,14 @@ void handleWebSocket() {
   serializeJson(JsonDoc, JsonString);
   //Send the JSON document to the websocket.
   webSocket.broadcastTXT(JsonString);
+  //Serial.println("Sent JSON to websocket");
+  //Serial.println(JsonString);
 }
 
-void postToRemoteServer() { 
+void postToRemoteServer(int meterNumber = 1) { 
+  
+  String meterPrefix = "m" + String(meterNumber) + "_";
+
   int test_power1 = random(1000);
   int test_power2 = random(1000);
   int test_power3 = random(1000);
@@ -294,17 +306,17 @@ void postToRemoteServer() {
 //  Serial.println("valuesString:  " + valuesString);
 
   String valuesString2 ="";
-  valuesString2 = "power1:" + String(JsonDoc["active_power_L1"]);
-  valuesString2 += ",power2:" + String(JsonDoc["active_power_L2"]);
-  valuesString2 += ",power3:" + String(JsonDoc["active_power_L3"]);
-  valuesString2 += ",powert:" + String(JsonDoc["active_power_tot"]);
+  valuesString2 = "power1:" + String(JsonDoc[meterPrefix + "active_power_L1"]);
+  valuesString2 += ",power2:" + String(JsonDoc[meterPrefix + "active_power_L2"]);
+  valuesString2 += ",power3:" + String(JsonDoc[meterPrefix + "active_power_L3"]);
+  valuesString2 += ",powert:" + String(JsonDoc[meterPrefix + "active_power_tot"]);
   Serial.println("valuesString2:  " + valuesString);
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     String url = "";
     url = String(emoncms_server);
-    url += "/input/post?node=1&json={";
+    url += "/input/post?node=" + String(meterNumber) + "&json={";
     //Test with fixed values
     //url += "power1:100,power2:200,power3:300";
     //Test with random values
@@ -314,6 +326,7 @@ void postToRemoteServer() {
     url += "}&apikey=" + String(api_key);
     Serial.println(url);
 
+    
 
     http.begin(url);
     int httpResponseCode = http.GET();
@@ -324,11 +337,30 @@ void postToRemoteServer() {
     } else {
       Serial.print("Error on sending POST: ");
       Serial.println(httpResponseCode);
+      //Responce code -1 means not internet access, data ok?
     }
     http.end();
   } else {
     Serial.println("WiFi Disconnected");
   }
+}
+
+void detectNumberOfMeters(){
+  uint16_t responseBuffer[4];
+  //Find number of meters, 4 max number for now.
+  for (int i = 1; i <= 4; i++) {
+    // Read Serial number registers 70 and 71
+    if (readHoldingRegisters(i, 70, 2, responseBuffer)) {  // i is the Modbus slave ID
+      uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
+      //Serial.print("Serial Number: ");
+      //Serial.println(combinedValue);
+      //Update the number of meters if able to read its serial number
+      numberOfMeters = i;
+      Serial.println("Number of meters detected: " + String(numberOfMeters));      
+    } else {
+      Serial.println("Error reading registers 70 and 71");
+    }
+  } 
 }
 
 void setup() {
@@ -349,6 +381,8 @@ void setup() {
   initWiFi();
   //Program will not continue unless WiFi is connected..
   initServer();
+  //Detect number of meters and set global variable, numberOfMeters.
+  detectNumberOfMeters();
 }
 
 void loop() {
@@ -368,7 +402,9 @@ void loop() {
   // Post meter data to remote server every 6 seconds
   if (now - counter2 > 6000) {
     //Post meter data to remote server
-    postToRemoteServer();
+    for (int i = 1; i <= numberOfMeters; i++) {
+      postToRemoteServer(i);
+    }
     counter2 = now;
   }
 
