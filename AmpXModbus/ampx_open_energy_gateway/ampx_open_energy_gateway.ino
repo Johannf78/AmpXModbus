@@ -139,6 +139,9 @@ void handlePowerMeter() {
   // uint16_t results[32];
   uint16_t responseBuffer[4];
   float value;
+  int meterNumber = 1;
+  String meterPrefix = "m" + String(meterNumber) + "_";
+
 
   // Read Serial number registers 70 and 71
   if (readHoldingRegisters(1, 70, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
@@ -158,19 +161,19 @@ void handlePowerMeter() {
 
   // Read voltage on L1
   if (readHoldingRegisters(1, 1010, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Voltage L1", "voltage_L1");
+    processRegisters(responseBuffer, 2, "Voltage L1", meterPrefix + "voltage_L1");
   } else {
     Serial.println("Error reading voltage registers");
   }
   // Read voltage on L2
   if (readHoldingRegisters(1, 1012, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Voltage L2", "voltage_L2");
+    processRegisters(responseBuffer, 2, "Voltage L2", meterPrefix + "voltage_L2");
   } else {
     Serial.println("Error reading voltage registers");
   }
   // Read voltage on L3
   if (readHoldingRegisters(1, 1014, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Voltage L3", "voltage_L3");
+    processRegisters(responseBuffer, 2, "Voltage L3", meterPrefix + "voltage_L3");
   } else {
     Serial.println("Error reading voltage registers");
   }
@@ -178,25 +181,25 @@ void handlePowerMeter() {
 
   // Read current on L1
   if (readHoldingRegisters(1, 1000, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Current L1", "current_L1");
+    processRegisters(responseBuffer, 2, "Current L1", meterPrefix + "current_L1");
   } else {
     Serial.println("Error reading current registers");
   }
   // Read current on L2
   if (readHoldingRegisters(1, 1002, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Current L2", "current_L2");
+    processRegisters(responseBuffer, 2, "Current L2", meterPrefix + "current_L2");
   } else {
     Serial.println("Error reading current registers");
   }
   // Read current on L3
   if (readHoldingRegisters(1, 1004, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Current L3", "current_L3");
+    processRegisters(responseBuffer, 2, "Current L3", meterPrefix + "current_L3");
   } else {
     Serial.println("Error reading current registers");
   }
   // Read current average
   if (readHoldingRegisters(1, 1006, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Current Avg", "current_avg");
+    processRegisters(responseBuffer, 2, "Current Avg", meterPrefix + "current_avg");
   } else {
     Serial.println("Error reading current registers");
   }
@@ -205,50 +208,50 @@ void handlePowerMeter() {
 
   // Read Active Power on L1
   if (readHoldingRegisters(1, 1028, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Active Power L1", "active_power_L1");
+    processRegisters(responseBuffer, 2, "Active Power L1", meterPrefix + "active_power_L1");
   } else {
     Serial.println("Error reading Active Power registers");
   }
   // Read Active Power on L2
   if (readHoldingRegisters(1, 1030, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Active Power L2", "active_power_L2");
+    processRegisters(responseBuffer, 2, "Active Power L2", meterPrefix + "active_power_L2");
   } else {
     Serial.println("Error reading Active Power registers");
   }
   // Read Power on L3
   if (readHoldingRegisters(1, 1032, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Active Power L3", "active_power_L3");
+    processRegisters(responseBuffer, 2, "Active Power L3", meterPrefix + "active_power_L3");
   } else {
     Serial.println("Error reading Active Power registers");
   }
   // Read Total Power
   if (readHoldingRegisters(1, 1034, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-    processRegisters(responseBuffer, 2, "Active Power Total", "active_power_tot");
+    processRegisters(responseBuffer, 2, "Active Power Total", meterPrefix + "active_power_tot");
   } else {
     Serial.println("Error reading Active Power registers");
   }
 
   //Read Active Energy Imported L1
   if (readHoldingRegisters64(1, 2500, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, "Energy Imported L1", "active_energy_imported_L1");
+    processRegistersInt64(responseBuffer, 4, "Energy Imported L1", meterPrefix + "active_energy_imported_L1");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
   //Read Active Energy Imported L2
   if (readHoldingRegisters64(1, 2504, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, "Energy Imported L2", "active_energy_imported_L2");
+    processRegistersInt64(responseBuffer, 4, "Energy Imported L2", meterPrefix + "active_energy_imported_L2");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
   //Read Active Energy Imported L3
   if (readHoldingRegisters64(1, 2508, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, "Energy Imported L3", "active_energy_imported_L3");
+    processRegistersInt64(responseBuffer, 4, "Energy Imported L3", meterPrefix + "active_energy_imported_L3");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
   //Read Active Energy Imported Total
   if (readHoldingRegisters64(1, 2512, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, "Energy Imported Total", "active_energy_imported_tot");
+    processRegistersInt64(responseBuffer, 4, "Energy Imported Total", meterPrefix + "active_energy_imported_tot");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
