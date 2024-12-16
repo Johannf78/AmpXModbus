@@ -293,6 +293,7 @@ void handlePowerMeter(int meterNumber = 1) {
   //Read Active Energy Imported Total
   if (readHoldingRegisters64(meterNumber, 2512, 4, responseBuffer)) {
     processRegistersInt64(responseBuffer, 4, "Energy Imported Total", meterPrefix + "active_energy_imported_tot");
+     processRegistersInt64(responseBuffer, 4, "Energy Imported Total", meterPrefix + "active_energy_imported_tot_summary");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
@@ -304,7 +305,7 @@ void handleWebSocket() {
   serializeJson(JsonDoc, JsonString);
   //Send the JSON document to the websocket.
   webSocket.broadcastTXT(JsonString);
-  //Serial.println("Sent JSON to websocket");
+  Serial.println("Sent JSON to websocket");
   Serial.println(JsonString);
 }
 

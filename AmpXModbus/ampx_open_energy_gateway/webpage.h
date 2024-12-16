@@ -19,7 +19,34 @@ String webpage = R"(
 <body>
 <main>
   <h1>AmpX Open Energy Gateway</h1>
+
+  <h2>Energy Consumption Summary</h2>
+  <table>
+  <tr>
+    <th>Meter</th>
+    <th>Total active energy imported</th>
+  </tr>
+  <tr id='meter1_summary'>
+    <td>1</td>
+    <td id='m1_active_energy_imported_tot_summary'>0 kWh</td>
+  </tr>
+  <tr id='meter2_summary'>
+    <td>2</td>
+    <td id='m2_active_energy_imported_tot_summary'>0 kWh</td>
+  </tr>
+  <tr id='meter3_summary'>
+    <td>3</td>
+    <td id='m3_active_energy_imported_tot_summary'>0 kWh</td>
+  </tr>
+  <tr id='meter4_summary'>
+    <td>4</td>
+    <td id='m4_active_energy_imported_tot_summary'>0 kWh</td>
+  </tr>
+  </table>
   
+
+
+
   <br/>
   <div id='meter1'>
     <h3>Meter: 1, Serial number: m1_serial_number</h3>
@@ -200,18 +227,28 @@ String webpage = R"(
 <script>
   var socket;
   function init(){
-    //This variable is updated by the Arduino code befor sending the HTML
+    //This variable is updated by the Arduino code before sending the HTML
     var numberOfMeters = numberOfMetersValue; // Define the number of meters as an integer
   
       // Hide the div with id 'meter2', 'meter3', and 'meter4' based on the numberOfMeters
+      // Also hide the summary table rows
     if (numberOfMeters == 1) {
+        document.getElementById('meter2_summary').style.display = 'none';
+        document.getElementById('meter3_summary').style.display = 'none';
+        document.getElementById('meter4_summary').style.display = 'none';
+
         document.getElementById('meter2').style.display = 'none';
         document.getElementById('meter3').style.display = 'none';
         document.getElementById('meter4').style.display = 'none';
     } else if (numberOfMeters == 2) {
+        document.getElementById('meter3_summary').style.display = 'none';
+        document.getElementById('meter4_summary').style.display = 'none';
+
         document.getElementById('meter3').style.display = 'none';
         document.getElementById('meter4').style.display = 'none';
     } else if (numberOfMeters == 3) {
+        document.getElementById('meter4_summary').style.display = 'none';
+
         document.getElementById('meter4').style.display = 'none';
     }
 
@@ -238,6 +275,7 @@ String webpage = R"(
           value += ' kWh';
 
         document.getElementById(key).innerHTML = value;
+        console.log("Key:", key, "Value:", value);
       }
     }
   }
