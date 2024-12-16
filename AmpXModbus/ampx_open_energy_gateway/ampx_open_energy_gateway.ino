@@ -40,6 +40,8 @@ const char* api_key = "c0526f06893d1063800d3bb966927711"; //your_API_KEY
 
 String m1_serial_number = "";  // Meter one serial number
 String m2_serial_number = "";  // Meter one serial number
+String m3_serial_number = "";  // Meter one serial number
+
 int numberOfMeters = 1;  // Number of meters connected, this needs to be adjusted if more meters are connected.
 
 
@@ -50,12 +52,12 @@ void processRegisters(uint16_t* results, uint16_t numRegisters,
                       const String& friendlyLabel, const String& docLabel) {
   for (uint16_t i = 0; i < numRegisters; i += 2) {
     /*
-    Serial.print(label);
+    Serial.print(friendlyLabel);
     Serial.print(" Register ");
     Serial.print(i);
     Serial.print(": ");
     Serial.println(results[i]);
-    Serial.print(label);
+    Serial.print(friendlyLabel);
     Serial.print(" Register ");
     Serial.print(i + 1);
     Serial.print(": ");
@@ -68,10 +70,11 @@ void processRegisters(uint16_t* results, uint16_t numRegisters,
     //Update the json document with the value
     JsonDoc[docLabel] = String(value, 2);
 
-
-    //Serial.print(friendlyLabel);
-    //Serial.print(": ");
-    //Serial.println(value);
+    /*
+    Serial.print(friendlyLabel);
+    Serial.print(": ");
+    Serial.println(value);
+    */
   }
 }
 
@@ -139,6 +142,7 @@ void handleRoot() {
   //Repalce the string m1_serial_number with the actual serial number, done here as it does not update regularly like values.
   webpage.replace("m1_serial_number", m1_serial_number);
   webpage.replace("m2_serial_number", m2_serial_number);
+  webpage.replace("m3_serial_number", m3_serial_number);
   webpage.replace("numberOfMetersValue", String(numberOfMeters));
 
   server.send(200, "text/html", webpage);
@@ -181,10 +185,25 @@ void handlePowerMeter(int meterNumber = 1) {
     Serial.println("Error reading registers 70 and 71");
   }
 
+
+    // Read Serial number registers 70 and 71
+  if (readHoldingRegisters(3, 70, 2, responseBuffer)) {  // 3 is the Modbus slave ID, adjust if necessary
+      /*Serial.print("Register 70: ");
+      Serial.println(responseBuffer[0]);
+      Serial.print("Register 71: ");
+      Serial.println(responseBuffer[1]);*/
+    uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
+    //Serial.print("Serial Number2: ");
+    //Serial.println(combinedValue);
+    m3_serial_number = combinedValue;
+  } else {
+    Serial.println("Error reading registers 70 and 71");
+  }
+
   // Read voltage on L1
   if (readHoldingRegisters(meterNumber, 1010, 2, responseBuffer)) { // meterNumber is the Modbus slave ID
     processRegisters(responseBuffer, 2, "Voltage L1", meterPrefix + "voltage_L1");
-  } else {
+    } else {
     Serial.println("Error reading voltage registers");
   }
   // Read voltage on L2
@@ -286,7 +305,7 @@ void handleWebSocket() {
   //Send the JSON document to the websocket.
   webSocket.broadcastTXT(JsonString);
   //Serial.println("Sent JSON to websocket");
-  //Serial.println(JsonString);
+  Serial.println(JsonString);
 }
 
 void postToRemoteServer(int meterNumber = 1) { 
@@ -324,7 +343,7 @@ void postToRemoteServer(int meterNumber = 1) {
     //Test with actual values
     url += valuesString2;
     url += "}&apikey=" + String(api_key);
-    Serial.println(url);
+    //Serial.println(url);
 
     
 
@@ -332,7 +351,7 @@ void postToRemoteServer(int meterNumber = 1) {
     int httpResponseCode = http.GET();
     if (httpResponseCode > 0) {
       String response = http.getString();
-      Serial.println(httpResponseCode);
+      //Serial.println(httpResponseCode);
       Serial.println(response);
     } else {
       Serial.print("Error on sending POST: ");
@@ -383,6 +402,7 @@ void setup() {
   initServer();
   //Detect number of meters and set global variable, numberOfMeters.
   detectNumberOfMeters();
+
 }
 
 void loop() {
@@ -399,8 +419,8 @@ void loop() {
     counter1 = now;
   }
 
-  // Post meter data to remote server every 6 seconds
-  if (now - counter2 > 6000) {
+  // Post meter data to remote server every 60 seconds
+  if (now - counter2 > 60000) {
     //Post meter data to remote server
     for (int i = 1; i <= numberOfMeters; i++) {
       postToRemoteServer(i);
