@@ -28,22 +28,24 @@ JsonDocument JsonDoc;
 //const char* ssid = "FRITZ!Family";
 //const char* password = "03368098169909319946";
 
-//const char* ssid = "Poly";
-//const char* password = "polypassword";
+const char* ssid = "Poly";
+const char* password = "polypassword";
 
-const char* ssid = "RUT901";
-const char* password = "d9U8DyWb";
+//const char* ssid = "RUT901";
+//const char* password = "d9U8DyWb";
 
 //EMONCMS, Remote energy logging, https://JsonDocs.openenergymonitor.org/emoncms/index.html
 const char* emoncms_server = "http://emoncms.org";
 const char* api_key = "c0526f06893d1063800d3bb966927711"; //your_API_KEY
 
 String m1_serial_number = "";  // Meter one serial number
-String m2_serial_number = "";  // Meter one serial number
-String m3_serial_number = "";  // Meter one serial number
+String m2_serial_number = "";
+String m3_serial_number = "";
+String m4_serial_number = "";  
+
 
 int numberOfMeters = 1;  // Number of meters connected, this needs to be adjusted if more meters are connected.
-
+int maxNumberOfMeters = 4;
 
 WebServer server(HTTP);
 WebSocketsServer webSocket = WebSocketsServer(81);
@@ -156,48 +158,26 @@ void handlePowerMeter(int meterNumber = 1) {
 
   String meterPrefix = "m" + String(meterNumber) + "_";
 
-
-  // Read Serial number registers 70 and 71
-  if (readHoldingRegisters(1, 70, 2, responseBuffer)) {  // 1 is the Modbus slave ID, adjust if necessary
-      /*Serial.print("Register 70: ");
-      Serial.println(responseBuffer[0]);
-      Serial.print("Register 71: ");
-      Serial.println(responseBuffer[1]);*/
-    uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
-    //Serial.print("Serial Number1: ");
-    //Serial.println(combinedValue);
-    m1_serial_number = combinedValue;
-  } else {
-    Serial.println("Error reading registers 70 and 71");
-  }
-
+  for (int i = 1; i <= maxNumberOfMeters; i++)
+  {
     // Read Serial number registers 70 and 71
-  if (readHoldingRegisters(2, 70, 2, responseBuffer)) {  // 2 is the Modbus slave ID, adjust if necessary
-      /*Serial.print("Register 70: ");
-      Serial.println(responseBuffer[0]);
-      Serial.print("Register 71: ");
-      Serial.println(responseBuffer[1]);*/
-    uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
-    //Serial.print("Serial Number2: ");
-    //Serial.println(combinedValue);
-    m2_serial_number = combinedValue;
-  } else {
-    Serial.println("Error reading registers 70 and 71");
-  }
-
-
-    // Read Serial number registers 70 and 71
-  if (readHoldingRegisters(3, 70, 2, responseBuffer)) {  // 3 is the Modbus slave ID, adjust if necessary
-      /*Serial.print("Register 70: ");
-      Serial.println(responseBuffer[0]);
-      Serial.print("Register 71: ");
-      Serial.println(responseBuffer[1]);*/
-    uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
-    //Serial.print("Serial Number2: ");
-    //Serial.println(combinedValue);
-    m3_serial_number = combinedValue;
-  } else {
-    Serial.println("Error reading registers 70 and 71");
+    if (readHoldingRegisters(i, 70, 2, responseBuffer)) {  // i is the Modbus slave ID
+      uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
+      if (i = 1){
+       m1_serial_number = combinedValue;
+      }
+      if (i = 2){
+       m2_serial_number = combinedValue;
+      }
+      if (i = 3){
+       m3_serial_number = combinedValue;
+      }
+      if (i = 4){
+       m4_serial_number = combinedValue;
+      }
+    } else {
+     // Serial.println("Error reading registers 70 and 71");
+    }
   }
 
   // Read voltage on L1
@@ -313,6 +293,7 @@ void postToRemoteServer(int meterNumber = 1) {
   
   String meterPrefix = "m" + String(meterNumber) + "_";
 
+/* for testing */
   int test_power1 = random(1000);
   int test_power2 = random(1000);
   int test_power3 = random(1000);
@@ -330,7 +311,7 @@ void postToRemoteServer(int meterNumber = 1) {
   valuesString2 += ",power2:" + String(JsonDoc[meterPrefix + "active_power_L2"]);
   valuesString2 += ",power3:" + String(JsonDoc[meterPrefix + "active_power_L3"]);
   valuesString2 += ",powert:" + String(JsonDoc[meterPrefix + "active_power_tot"]);
-  Serial.println("valuesString2:  " + valuesString);
+ // Serial.println("valuesString2:  " + valuesString);
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -342,7 +323,7 @@ void postToRemoteServer(int meterNumber = 1) {
     //Test with random values
     //url += valuesString;
     //Test with actual values
-    url += valuesString2;
+    url += valuesString;
     url += "}&apikey=" + String(api_key);
     //Serial.println(url);
 
@@ -353,6 +334,7 @@ void postToRemoteServer(int meterNumber = 1) {
     if (httpResponseCode > 0) {
       String response = http.getString();
       //Serial.println(httpResponseCode);
+      Serial.print("Https client Response: ");
       Serial.println(response);
     } else {
       Serial.print("Error on sending POST: ");
@@ -378,7 +360,7 @@ void detectNumberOfMeters(){
       numberOfMeters = i;
       Serial.println("Number of meters detected: " + String(numberOfMeters));      
     } else {
-      Serial.println("Error reading registers 70 and 71");
+     // Serial.println("Error reading registers 70 and 71");
     }
   } 
 }
@@ -421,7 +403,7 @@ void loop() {
   }
 
   // Post meter data to remote server every 60 seconds
-  if (now - counter2 > 60000) {
+  if (now - counter2 > 500) {
     //Post meter data to remote server
     for (int i = 1; i <= numberOfMeters; i++) {
       postToRemoteServer(i);
