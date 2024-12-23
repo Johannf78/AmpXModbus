@@ -14,6 +14,8 @@ This just seperates all the modbus functions and make this file easier to read.
 #include "webpage.h"
 //Search for ArduinoJson, install the one by Benoit Blanchon
 #include <ArduinoJson.h>
+#include <ArduinoOTA.h>
+#include <Update.h>
 
 //The JSonDocument is used to send data to the websocket.
 JsonDocument JsonDoc;
@@ -30,6 +32,9 @@ JsonDocument JsonDoc;
 
 const char* ssid = "Poly";
 const char* password = "polypassword";
+
+const char* firmwareURL = "https://ampx.co/downloads/ampx_open_energy_gateway.ino.bin";
+bool readSerial = false;
 
 //const char* ssid = "RUT901";
 //const char* password = "d9U8DyWb";
@@ -126,6 +131,44 @@ void initWiFi() {
   Serial.println(WiFi.localIP());
   Serial.print("Signal strength: ");
   Serial.println(WiFi.RSSI());
+
+  // OTA setup
+  ArduinoOTA.onStart([]() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH) {
+      type = "sketch";
+    } else {
+      type = "filesystem";
+    }
+    
+    Serial.println("Start updating " + type);
+  });
+
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress * 100) / total);
+  });
+
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) {
+      Serial.println("Auth Failed");
+    } else if (error == OTA_BEGIN_ERROR) {
+      Serial.println("Begin Failed");
+    } else if (error == OTA_CONNECT_ERROR) {
+      Serial.println("Connect Failed");
+    } else if (error == OTA_RECEIVE_ERROR) {
+      Serial.println("Receive Failed");
+    } else if (error == OTA_END_ERROR) {
+      Serial.println("End Failed");
+    }
+  });
+
+  ArduinoOTA.begin();
+  Serial.println("Ready for OTA updates.");
 }
 
 void initServer() {
@@ -285,6 +328,7 @@ void handleWebSocket() {
   serializeJson(JsonDoc, JsonString);
   //Send the JSON document to the websocket.
   webSocket.broadcastTXT(JsonString);
+
   Serial.println("Sent JSON to websocket");
   Serial.println(JsonString);
 }
@@ -293,7 +337,7 @@ void postToRemoteServer(int meterNumber = 1) {
   
   String meterPrefix = "m" + String(meterNumber) + "_";
 
-/* for testing */
+/* for testing 
   int test_power1 = random(1000);
   int test_power2 = random(1000);
   int test_power3 = random(1000);
@@ -305,13 +349,22 @@ void postToRemoteServer(int meterNumber = 1) {
   valuesString += ",power3:" + String(test_power3);
   valuesString += ",powert:" + String(test_powert);
 //  Serial.println("valuesString:  " + valuesString);
+*/
 
   String valuesString2 ="";
   valuesString2 = "power1:" + String(JsonDoc[meterPrefix + "active_power_L1"]);
   valuesString2 += ",power2:" + String(JsonDoc[meterPrefix + "active_power_L2"]);
   valuesString2 += ",power3:" + String(JsonDoc[meterPrefix + "active_power_L3"]);
   valuesString2 += ",powert:" + String(JsonDoc[meterPrefix + "active_power_tot"]);
- // Serial.println("valuesString2:  " + valuesString);
+ // Serial.println("valuesString2:  " + valuesString2);
+
+  //Add energy imported values
+  valuesString2 += ",energy1:" + String(JsonDoc[meterPrefix + "active_energy_imported_L1"]);
+  valuesString2 += ",energy2:" + String(JsonDoc[meterPrefix + "active_energy_imported_L2"]);
+  valuesString2 += ",energy3:" + String(JsonDoc[meterPrefix + "active_energy_imported_L3"]);
+  valuesString2 += ",energyt:" + String(JsonDoc[meterPrefix + "active_energy_imported_tot"]);
+  Serial.println("valuesString2:  " + valuesString2);
+
 
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -323,7 +376,7 @@ void postToRemoteServer(int meterNumber = 1) {
     //Test with random values
     //url += valuesString;
     //Test with actual values
-    url += valuesString;
+    url += valuesString2;
     url += "}&apikey=" + String(api_key);
     //Serial.println(url);
 
@@ -339,7 +392,7 @@ void postToRemoteServer(int meterNumber = 1) {
     } else {
       Serial.print("Error on sending POST: ");
       Serial.println(httpResponseCode);
-      //Responce code -1 means not internet access, data ok?
+      //Responce code -1 means no internet access, data ok?
     }
     http.end();
   } else {
@@ -350,7 +403,7 @@ void postToRemoteServer(int meterNumber = 1) {
 void detectNumberOfMeters(){
   uint16_t responseBuffer[4];
   //Find number of meters, 4 max number for now.
-  for (int i = 1; i <= 4; i++) {
+  for (int i = 1; i <= maxNumberOfMeters; i++) {
     // Read Serial number registers 70 and 71
     if (readHoldingRegisters(i, 70, 2, responseBuffer)) {  // i is the Modbus slave ID
       uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
@@ -381,6 +434,7 @@ void setup() {
 
   // Initialize WiFi
   initWiFi();
+
   //Program will not continue unless WiFi is connected..
   initServer();
   //Detect number of meters and set global variable, numberOfMeters.
@@ -389,6 +443,10 @@ void setup() {
 }
 
 void loop() {
+  doOTAUpdate();
+
+  ArduinoOTA.handle();
+
   static unsigned long counter1 = 0;
   static unsigned long counter2 = 0;
   unsigned long now = millis();
@@ -415,4 +473,54 @@ void loop() {
   //These functions must run continuesly, so one can not include a delay in the main loop.
   server.handleClient();  //Handle webserver requests from client
   webSocket.loop();
+}
+
+void doOTAUpdate() {
+  if (Serial.available()) {
+    byte a = Serial.read();
+    Serial.println(a, HEX);
+    readSerial = true;
+  } else {
+    if (readSerial) {
+      Serial.println("Starting OTA update...");
+
+      HTTPClient http;
+      http.begin(firmwareURL);
+
+      int httpCode = http.GET();
+      if (httpCode == HTTP_CODE_OK) {
+        int length = http.getSize();
+        WiFiClient* stream = http.getStreamPtr();
+
+        if (!Update.begin(length)) {
+          Serial.println("Not enough space for OTA update");
+          return;
+        }
+
+        // Start updating
+        size_t written = Update.writeStream(*stream);
+        if (written == length) {
+          Serial.println("Firmware written successfully!");
+        } else {
+          Serial.printf("Written only %d/%d bytes.\n", written, length);
+        }
+
+        // Check for success
+        if (Update.end()) {
+          if (Update.isFinished()) {
+            Serial.println("OTA update successful. Restarting...");
+            ESP.restart();
+          } else {
+            Serial.println("OTA update not finished.");
+          }
+        } else {
+          Serial.printf("OTA update failed: %s\n", Update.errorString());
+        }
+      } else {
+        Serial.printf("HTTP request failed. HTTP code: %d\n", httpCode);
+      }
+
+      http.end();
+    }
+  }
 }
