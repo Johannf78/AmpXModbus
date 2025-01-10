@@ -217,6 +217,8 @@ String webpage = R"(
   </div>
 
 <p>Values updates every 3 seconds.</p>
+<p><a href="/settings">Settings </a></p>
+
 
 </main>
 <footer>

@@ -12,10 +12,12 @@ This just seperates all the modbus functions and make this file easier to read.
 #include <WebSocketsServer.h>
 //The HTML code is stored in a seperate file, this makes the code easier to read.
 #include "webpage.h"
+#include "web_settings.h"
 //Search for ArduinoJson, install the one by Benoit Blanchon
 #include <ArduinoJson.h>
 #include <ArduinoOTA.h>
 #include <Update.h>
+#include <Preferences.h>
 
 //The JSonDocument is used to send data to the websocket.
 JsonDocument JsonDoc;
@@ -30,11 +32,11 @@ JsonDocument JsonDoc;
 //const char* ssid = "FRITZ!Family";
 //const char* password = "03368098169909319946";
 
-const char* ssid = "RUT901";
-const char* password = "d9U8DyWb";
+//const char* ssid = "RUT901";
+//const char* password = "d9U8DyWb";
 
-//const char* ssid = "Telkom";
-//const char* password = "0827270909";
+const char* ssid = "Telkom";
+const char* password = "0827270909";
 
 //const char* ssid = "Poly";
 //const char* password = "polypassword";
@@ -58,6 +60,8 @@ int maxNumberOfMeters = 4;
 
 WebServer server(HTTP);
 WebSocketsServer webSocket = WebSocketsServer(81);
+
+Preferences preferences;
 
 void processRegisters(uint16_t* results, uint16_t numRegisters,
                       const String& friendlyLabel, const String& docLabel) {
@@ -120,6 +124,14 @@ void processRegistersInt64(uint16_t* responseBuffer, uint16_t numRegisters,
   //Serial.println(value);
 }
 
+void initNvs() {
+  if (preferences.begin("app", false)) {
+    Serial.println("NVS initialized successfully!");
+  } else {
+    Serial.println("Failed to initialize NVS.");
+  }
+}
+
 void initWiFi() {
   // Connect to the Wi-Fi network
   WiFi.begin(ssid, password);
@@ -177,9 +189,24 @@ void initWiFi() {
 
 void initServer() {
   server.on("/", handleRoot);
+  server.on("/update", HTTP_POST, handleUpdate);
+  server.on("/settings", handleSettings);
+  server.on("/update_meters_name", HTTP_POST, handleChangeMetersName);
   server.begin();
   //Initialise the websockets on port 81
   webSocket.begin();
+}
+
+void handleChangeMetersName() {
+  String m1_name = server.arg("m1_name");
+  preferences.putString("m1_name", m1_name);
+  Serial.println("m1_name: " + m1_name);
+  server.send(200, "text/plain", "Updated successfully.");
+}
+
+void handleSettings()
+{
+  server.send(200, "text/html", webpage_settings);
 }
 
 void handleRoot() {
@@ -195,6 +222,10 @@ void handleRoot() {
   webpage.replace("numberOfMetersValue", String(numberOfMeters));
 
   server.send(200, "text/html", webpage);
+}
+
+void handleUpdate() {
+  doOTAUpdate();
 }
 
 void handlePowerMeter(int meterNumber = 1) {
@@ -329,12 +360,17 @@ void handlePowerMeter(int meterNumber = 1) {
 void handleWebSocket() {
   String JsonString;
 
+  String m1_name = preferences.getString("m1_name");
+  Serial.println("m1_name: " + m1_name);
+
+  JsonDoc["m1_name"] = m1_name;
+
   serializeJson(JsonDoc, JsonString);
   //Send the JSON document to the websocket.
   webSocket.broadcastTXT(JsonString);
 
-  Serial.println("Sent JSON to websocket");
-  Serial.println(JsonString);
+  //TODO Serial.println("Sent JSON to websocket");
+  //TODO Serial.println(JsonString);
 }
 
 void postToRemoteServer(int meterNumber = 1) { 
@@ -439,6 +475,9 @@ void setup() {
   // Initialize WiFi
   initWiFi();
 
+  // Initialize NVS
+  initNvs();  
+
   //Program will not continue unless WiFi is connected..
   initServer();
   //Detect number of meters and set global variable, numberOfMeters.
@@ -453,8 +492,6 @@ void setup() {
 }
 
 void loop() {
-  doOTAUpdate();
-
   ArduinoOTA.handle();
 
   static unsigned long counter1 = 0;
@@ -486,51 +523,46 @@ void loop() {
 }
 
 void doOTAUpdate() {
-  if (Serial.available()) {
-    byte a = Serial.read();
-    Serial.println(a, HEX);
-    readSerial = true;
-  } else {
-    if (readSerial) {
-      Serial.println("Starting OTA update...");
+  Serial.println("Starting OTA update...");
 
-      HTTPClient http;
-      http.begin(firmwareURL);
+  HTTPClient http;
+  http.begin(firmwareURL);
 
-      int httpCode = http.GET();
-      if (httpCode == HTTP_CODE_OK) {
-        int length = http.getSize();
-        WiFiClient* stream = http.getStreamPtr();
+  int httpCode = http.GET();
+  if (httpCode == HTTP_CODE_OK) {
+    int length = http.getSize();
+    WiFiClient* stream = http.getStreamPtr();
 
-        if (!Update.begin(length)) {
-          Serial.println("Not enough space for OTA update");
-          return;
-        }
-
-        // Start updating
-        size_t written = Update.writeStream(*stream);
-        if (written == length) {
-          Serial.println("Firmware written successfully!");
-        } else {
-          Serial.printf("Written only %d/%d bytes.\n", written, length);
-        }
-
-        // Check for success
-        if (Update.end()) {
-          if (Update.isFinished()) {
-            Serial.println("OTA update successful. Restarting...");
-            ESP.restart();
-          } else {
-            Serial.println("OTA update not finished.");
-          }
-        } else {
-          Serial.printf("OTA update failed: %s\n", Update.errorString());
-        }
-      } else {
-        Serial.printf("HTTP request failed. HTTP code: %d\n", httpCode);
-      }
-
-      http.end();
+    if (!Update.begin(length)) {
+      Serial.println("Not enough space for OTA update");
+      return;
     }
+
+    // Start updating
+    size_t written = Update.writeStream(*stream);
+    if (written == length) {
+      Serial.println("Firmware written successfully!");
+      //TODO customize the update page here
+      // send the html with "text/html"
+      server.send(200, "text/plain", "Update completed!");
+    } else {
+      Serial.printf("Written only %d/%d bytes.\n", written, length);
+    }
+
+    // Check for success
+    if (Update.end()) {
+      if (Update.isFinished()) {
+        Serial.println("OTA update successful. Restarting...");
+        ESP.restart();
+      } else {
+        Serial.println("OTA update not finished.");
+      }
+    } else {
+      Serial.printf("OTA update failed: %s\n", Update.errorString());
+    }
+  } else {
+    Serial.printf("HTTP request failed. HTTP code: %d\n", httpCode);
   }
+
+  http.end();
 }
