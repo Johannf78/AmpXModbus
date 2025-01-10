@@ -260,7 +260,7 @@ String webpage = R"(
   }
   function processCommand(event){
     var data = JSON.parse(event.data);
-
+    
     if (data) {
       for (let key in data) {
         let value = data[key];

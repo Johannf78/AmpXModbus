@@ -30,14 +30,18 @@ JsonDocument JsonDoc;
 //const char* ssid = "FRITZ!Family";
 //const char* password = "03368098169909319946";
 
-const char* ssid = "Poly";
-const char* password = "polypassword";
+const char* ssid = "RUT901";
+const char* password = "d9U8DyWb";
+
+//const char* ssid = "Telkom";
+//const char* password = "0827270909";
+
+//const char* ssid = "Poly";
+//const char* password = "polypassword";
 
 const char* firmwareURL = "https://ampx.co/downloads/ampx_open_energy_gateway.ino.bin";
 bool readSerial = false;
 
-//const char* ssid = "RUT901";
-//const char* password = "d9U8DyWb";
 
 //EMONCMS, Remote energy logging, https://JsonDocs.openenergymonitor.org/emoncms/index.html
 const char* emoncms_server = "http://emoncms.org";
@@ -440,6 +444,12 @@ void setup() {
   //Detect number of meters and set global variable, numberOfMeters.
   detectNumberOfMeters();
 
+  //Do the initial reading of the meters and update of the webpage, then repeat after 3 seconds in the loop.
+  for (int i = 1; i <= numberOfMeters; i++) {
+    handlePowerMeter(i); //Pass the meter number to the function.
+  }
+  handleWebSocket();
+
 }
 
 void loop() {
@@ -460,8 +470,8 @@ void loop() {
     counter1 = now;
   }
 
-  // Post meter data to remote server every 60 seconds
-  if (now - counter2 > 500) {
+  // Post meter data to remote server every 5 minutes
+  if (now - counter2 > 300000) {
     //Post meter data to remote server
     for (int i = 1; i <= numberOfMeters; i++) {
       postToRemoteServer(i);
