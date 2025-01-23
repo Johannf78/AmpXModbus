@@ -2,6 +2,19 @@
 the file "ampx_modbus_functions.ino" should be in the same directory as this .ino file.
 It is automatically included and merged with this file.
 This just seperates all the modbus functions and make this file easier to read.
+
+For The ESP32 Node32s board do the following:
+Go to File -> Preferences.
+in the "Additional Boards Manager URLs"
+Add the following String:
+https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+
+Then in the boards manager, search for: "esp32 by Espressif Systems"
+Then install the board manager.
+
+Now select the port and then 
+Select "node32s" under the boards.
+
 */
 
 
@@ -10,14 +23,16 @@ This just seperates all the modbus functions and make this file easier to read.
 #include <HTTPClient.h>
 //Search for Arduino Websockets, install the one by Markus Sattler
 #include <WebSocketsServer.h>
-//The HTML code is stored in a seperate file, this makes the code easier to read.
-#include "webpage.h"
-#include "web_settings.h"
 //Search for ArduinoJson, install the one by Benoit Blanchon
 #include <ArduinoJson.h>
 #include <ArduinoOTA.h>
 #include <Update.h>
+//Install the one by Vlodomyr Shymanskyy, https://github.com/vshymanskyy/Preferences
 #include <Preferences.h>
+
+//The HTML code is stored in a seperate file, this makes the code easier to read.
+#include "webpage.h"
+#include "web_settings.h"
 
 //The JSonDocument is used to send data to the websocket.
 JsonDocument JsonDoc;
@@ -133,6 +148,9 @@ void initNvs() {
 }
 
 void initWiFi() {
+  
+  WiFi.setHostname("AmpX-Energy-Gateway");
+
   // Connect to the Wi-Fi network
   WiFi.begin(ssid, password);
 
@@ -451,75 +469,11 @@ void detectNumberOfMeters(){
       //Serial.println(combinedValue);
       //Update the number of meters if able to read its serial number
       numberOfMeters = i;
-      Serial.println("Number of meters detected: " + String(numberOfMeters));      
+      Serial.println("Number of meters detected: " + String(i));      
     } else {
-     // Serial.println("Error reading registers 70 and 71");
+     Serial.println("Error reading meter: " + String(i));
     }
   } 
-}
-
-void setup() {
-  Serial.begin(9600); // Debug serial
-  Serial2.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);  // Modbus serial, 
-  //SERIAL_8N1: configuration for serial communication. 8: 8 data bits, N: No parity bit, 1: 1 stop bit
-  delay(500);  //Just to give the serial ports some time to initialise.
-
-  pinMode(MAX485_DE, OUTPUT);
-  pinMode(MAX485_RE_NEG, OUTPUT);
-  digitalWrite(MAX485_DE, LOW); //Disables the RS485 driver.
-  digitalWrite(MAX485_RE_NEG, LOW); // Enables the RS485 receiver.
-
-  // Debugging information
-  Serial.println("Setup complete. Starting communication...");
-
-  // Initialize WiFi
-  initWiFi();
-
-  // Initialize NVS
-  initNvs();  
-
-  //Program will not continue unless WiFi is connected..
-  initServer();
-  //Detect number of meters and set global variable, numberOfMeters.
-  detectNumberOfMeters();
-
-  //Do the initial reading of the meters and update of the webpage, then repeat after 3 seconds in the loop.
-  for (int i = 1; i <= numberOfMeters; i++) {
-    handlePowerMeter(i); //Pass the meter number to the function.
-  }
-  handleWebSocket();
-
-}
-
-void loop() {
-  ArduinoOTA.handle();
-
-  static unsigned long counter1 = 0;
-  static unsigned long counter2 = 0;
-  unsigned long now = millis();
-
-  // Read the parameters every 3 seconds
-  if (now - counter1 > 3000) {
-    for (int i = 1; i <= numberOfMeters; i++) {
-      handlePowerMeter(i); //Pass the meter number to the function.
-    }
-    handleWebSocket();
-    counter1 = now;
-  }
-
-  // Post meter data to remote server every 5 minutes
-  if (now - counter2 > 300000) {
-    //Post meter data to remote server
-    for (int i = 1; i <= numberOfMeters; i++) {
-      postToRemoteServer(i);
-    }
-    counter2 = now;
-  }
-
-
-  //These functions must run continuesly, so one can not include a delay in the main loop.
-  server.handleClient();  //Handle webserver requests from client
-  webSocket.loop();
 }
 
 void doOTAUpdate() {
@@ -566,3 +520,77 @@ void doOTAUpdate() {
 
   http.end();
 }
+
+void setup() {
+  Serial.begin(9600); // Debug serial
+  Serial2.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);  // Modbus serial, 
+  //SERIAL_8N1: configuration for serial communication. 8: 8 data bits, N: No parity bit, 1: 1 stop bit
+  delay(500);  //Just to give the serial ports some time to initialise.
+
+  pinMode(MAX485_DE, OUTPUT);
+  pinMode(MAX485_RE_NEG, OUTPUT);
+  digitalWrite(MAX485_DE, LOW); //Disables the RS485 driver.
+  digitalWrite(MAX485_RE_NEG, LOW); // Enables the RS485 receiver.
+
+  // Debugging information
+  Serial.println("Setup complete. Starting communication...");
+
+  // Initialize WiFi
+  initWiFi();
+
+  // Initialize NVS
+  initNvs();  
+
+  //Program will not continue unless WiFi is connected..
+  initServer();
+  //Detect number of meters and set global variable, numberOfMeters.
+  detectNumberOfMeters();
+
+  //Do the initial reading of the meters and update of the webpage, then repeat after 3 seconds in the loop.
+  for (int i = 1; i <= numberOfMeters; i++) {
+    handlePowerMeter(i); //Pass the meter number to the function.
+  }
+  handleWebSocket();
+
+}
+
+void loop() {
+  ArduinoOTA.handle();
+
+  static unsigned long counter1 = 0;
+  static unsigned long counter2 = 0;
+  static unsigned long counter3 = 0;
+  unsigned long now = millis();
+
+  // Read the parameters every 3 seconds
+  if (now - counter1 > 3000) {
+    for (int i = 1; i <= numberOfMeters; i++) {
+      handlePowerMeter(i); //Pass the meter number to the function.
+    }
+    handleWebSocket();
+    counter1 = now;
+  }
+
+  // Post meter data to remote server every 5 minutes
+  if (now - counter2 > 300000) {
+    //Post meter data to remote server
+    for (int i = 1; i <= numberOfMeters; i++) {
+      postToRemoteServer(i);
+    }
+    counter2 = now;
+  }
+
+  //Reboot every 24 hours to ensure it keeps working, 86400000
+  if (now - counter3 > 86400000) {
+    //Reboot the ESP32
+    ESP.restart();
+    //counter3 = now;
+  }
+
+
+  //These functions must run continuesly, so one can not include a delay in the main loop.
+  server.handleClient();  //Handle webserver requests from client
+  webSocket.loop();
+}
+
+

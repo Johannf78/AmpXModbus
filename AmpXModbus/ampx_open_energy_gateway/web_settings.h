@@ -27,8 +27,9 @@ String webpage_settings = R"(
   </form>
 
   <form action='update' method='post'>
-    <p>Update firmware</p>
-    <input type='submit' value='update'>
+    <p>
+    <lable>Click the button to update the device firmware:</lable>
+    <input type='submit' value='update'></p>
   </form>
 
 
