@@ -30,11 +30,11 @@ JsonDocument JsonDoc;
 #define TX_PIN 17
 #define HTTP 80
 
-//const char* ssid = "FRITZ!Family";
-//const char* password = "03368098169909319946";
+const char* ssid = "FRITZ!Family";
+const char* password = "03368098169909319946";
 
-const char* ssid = "RUT901";
-const char* password = "d9U8DyWb";
+//const char* ssid = "RUT901";
+//const char* password = "d9U8DyWb";
 
 //const char* ssid = "Telkom";
 //const char* password = "0827270909";
@@ -452,9 +452,9 @@ void detectNumberOfMeters(){
       //Serial.println(combinedValue);
       //Update the number of meters if able to read its serial number
       numberOfMeters = i;
-      Serial.println("Number of meters detected: " + String(numberOfMeters));      
+      Serial.println("Number of meters detected: " + String(i));      
     } else {
-     Serial.println("Error reading meter: " + String(numberOfMeters));
+     Serial.println("Error reading meter: " + String(i));
     }
   } 
 }
