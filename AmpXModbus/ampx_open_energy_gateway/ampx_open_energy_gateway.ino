@@ -29,14 +29,14 @@ JsonDocument JsonDoc;
 #define TX_PIN 17
 #define HTTP 80
 
-//const char* ssid = "FRITZ!Family";
-//const char* password = "03368098169909319946";
+const char* ssid = "FRITZ!Family";
+const char* password = "03368098169909319946";
 
 //const char* ssid = "RUT901";
 //const char* password = "d9U8DyWb";
 
-const char* ssid = "Telkom";
-const char* password = "0827270909";
+//const char* ssid = "Telkom";
+//const char* password = "0827270909";
 
 //const char* ssid = "Poly";
 //const char* password = "polypassword";
@@ -206,7 +206,12 @@ void handleChangeMetersName() {
 
 void handleSettings()
 {
-  server.send(200, "text/html", webpage_settings);
+  String page = webpage_settings;
+  page.replace("numberOfMetersValue", String(numberOfMeters));
+  String m1_name = preferences.getString("m1_name");
+  Serial.println("m1_name_value: " + m1_name);
+  page.replace("m1_name_value", m1_name);
+  server.send(200, "text/html", page);
 }
 
 void handleRoot() {
@@ -359,11 +364,6 @@ void handlePowerMeter(int meterNumber = 1) {
 
 void handleWebSocket() {
   String JsonString;
-
-  String m1_name = preferences.getString("m1_name");
-  Serial.println("m1_name: " + m1_name);
-
-  JsonDoc["m1_name"] = m1_name;
 
   serializeJson(JsonDoc, JsonString);
   //Send the JSON document to the websocket.

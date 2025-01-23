@@ -22,7 +22,7 @@ String webpage_settings = R"(
   
   <form action='update_meters_name' method='post' enctype='application/x-www-form-urlencoded'>
     <h3>Meter: 1, Serial number: m1_serial_number</h3>
-    <label for='m1_name'>Meter name: </label><input type='text' id='m1_name' name='m1_name'>
+    <label for='m1_name'>Meter name: </label><input type='text' id='m1_name' name='m1_name' value='m1_name_value'>
     <input type='submit' value='update'>
   </form>
 
@@ -39,4 +39,59 @@ String webpage_settings = R"(
 <span><a href='www.ampx.co/' target'_blank'>www.ampx.co</a></span>
 </footer>
 </body>
+<script>
+  var socket;
+  function init(){
+    //This variable is updated by the Arduino code before sending the HTML
+    var numberOfMeters = numberOfMetersValue; // Define the number of meters as an integer
+    //document.getElementById(key).value = value;
+
+    /*
+    // Hide the div with id 'meter2', 'meter3', and 'meter4' based on the numberOfMeters
+    // Also hide the summary table rows
+    if (numberOfMeters == 1) {
+        document.getElementById('meter2_summary').style.display = 'none';
+        document.getElementById('meter3_summary').style.display = 'none';
+        document.getElementById('meter4_summary').style.display = 'none';
+
+        document.getElementById('meter2').style.display = 'none';
+        document.getElementById('meter3').style.display = 'none';
+        document.getElementById('meter4').style.display = 'none';
+    } else if (numberOfMeters == 2) {
+        document.getElementById('meter3_summary').style.display = 'none';
+        document.getElementById('meter4_summary').style.display = 'none';
+
+        document.getElementById('meter3').style.display = 'none';
+        document.getElementById('meter4').style.display = 'none';
+    } else if (numberOfMeters == 3) {
+        document.getElementById('meter4_summary').style.display = 'none';
+
+        document.getElementById('meter4').style.display = 'none';
+    }
+
+    socket = new WebSocket('ws://' + window.location.hostname + ':81/');
+    socket.onmessage = function(event) {
+      processCommand(event);
+    };
+    */
+  }
+  function processCommand(event){
+    var data = JSON.parse(event.data);
+    
+    if (data) {
+      for (let key in data) {
+        let value = data[key];
+        
+        try {
+          document.getElementById(key).value = value;
+          console.log("Key:", key, "Value:", value);
+        } catch {
+        }
+      }
+    }
+  }
+  window.onload = function(event){
+    init();
+  }
+</script>
   )";
