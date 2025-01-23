@@ -2,6 +2,19 @@
 the file "ampx_modbus_functions.ino" should be in the same directory as this .ino file.
 It is automatically included and merged with this file.
 This just seperates all the modbus functions and make this file easier to read.
+
+For The ESP32 Node32s board do the following:
+Go to File -> Preferences.
+in the "Additional Boards Manager URLs"
+Add the following String:
+https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+
+Then in the boards manager, search for: "esp32 by Espressif Systems"
+Then install the board manager.
+
+Now select the port and then 
+Select "node32s" under the boards.
+
 */
 
 
@@ -14,6 +27,7 @@ This just seperates all the modbus functions and make this file easier to read.
 #include <ArduinoJson.h>
 #include <ArduinoOTA.h>
 #include <Update.h>
+//Install the one by Vlodomyr Shymanskyy, https://github.com/vshymanskyy/Preferences
 #include <Preferences.h>
 
 //The HTML code is stored in a seperate file, this makes the code easier to read.
@@ -134,6 +148,9 @@ void initNvs() {
 }
 
 void initWiFi() {
+  
+  WiFi.setHostname("AmpX-Energy-Gateway");
+
   // Connect to the Wi-Fi network
   WiFi.begin(ssid, password);
 
