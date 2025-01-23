@@ -49,7 +49,7 @@ String webpage = R"(
 
   <br/>
   <div id='meter1'>
-    <h3>Meter: 1, Serial number: m1_serial_number</h3>
+    <h3>Meter: 1, Serial number: m1_serial_number m1_name</h3>
     <table>
     <tr>
       <th>Entity</th>
@@ -91,7 +91,7 @@ String webpage = R"(
 
   <br/>
   <div id='meter2'>
-    <h3>Meter: 2, Serial number: m2_serial_number</h3>
+    <h3>Meter: 2, Serial number: m2_serial_number m2_name</h3>
     <table>
     <tr>
       <th>Entity</th>
@@ -133,7 +133,7 @@ String webpage = R"(
 
   <br/>
   <div id='meter3'>
-    <h3>Meter: 3, Serial number: m3_serial_number</h3>
+    <h3>Meter: 3, Serial number: m3_serial_number m3_name</h3>
     <table>
     <tr>
       <th>Entity</th>

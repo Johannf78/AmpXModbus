@@ -219,7 +219,7 @@ void handleChangeMetersName() {
   String m1_name = server.arg("m1_name");
   preferences.putString("m1_name", m1_name);
   Serial.println("m1_name: " + m1_name);
-  server.send(200, "text/plain", "Updated successfully.");
+  server.send(200, "text/html", "Updated successfully. <br><a href='/settings'>settings</a>");
 }
 
 void handleSettings()
@@ -238,11 +238,15 @@ void handleRoot() {
   //html += vol;
   //the String webpage has been defined in the included file webpage.h
 
-  //Repalce the string m1_serial_number with the actual serial number, done here as it does not update regularly like values.
+  //Replace the string m1_serial_number with the actual serial number, done here as it does not update regularly like values.
   webpage.replace("m1_serial_number", m1_serial_number);
   webpage.replace("m2_serial_number", m2_serial_number);
   webpage.replace("m3_serial_number", m3_serial_number);
   webpage.replace("numberOfMetersValue", String(numberOfMeters));
+
+  //Replace the stringm1_name with the setting saved in the permanent memory
+  String m1_name = preferences.getString("m1_name");
+  webpage.replace("m1_name", ", Name: " + m1_name);
 
   server.send(200, "text/html", webpage);
 }

@@ -33,6 +33,7 @@ String webpage_settings = R"(
   </form>
 
 
+  <p><a href="/">Home </a> | <a href="/settings">Settings </a></p>
 
 </main>
 <footer>
