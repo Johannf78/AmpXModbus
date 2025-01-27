@@ -52,12 +52,14 @@ void processRegisters(uint16_t* results, uint16_t numRegisters,
     Serial.print("Register " + String(i) + ": ");
     Serial.println(results[i]);
   }
-  
+  /*
   uint32_t combinedValue = combineAndSwap(results[1], results[2]);
-  float value = convertToFloat(combinedValue);
+  Serial.print("combinedValue: ");
+  Serial.println(combinedValue);    
+  */
 
-  Serial.print(friendlyLabel);
-  Serial.print(": ");
+  float value = convertToFloat();
+  Serial.print(friendlyLabel + ": ");
   Serial.println(value);    
 }
 

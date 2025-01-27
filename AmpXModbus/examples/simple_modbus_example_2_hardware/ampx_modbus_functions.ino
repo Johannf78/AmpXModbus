@@ -92,16 +92,8 @@ bool readHoldingRegisters(uint8_t slaveID, uint16_t startAddress, uint16_t numRe
 }
 
 
-float convertToFloat(uint32_t value) {
-  float result;
-  uint8_t *valuePtr = (uint8_t *)&value;
-  uint8_t swapped[4];
-  swapped[0] = valuePtr[3];
-  swapped[1] = valuePtr[2];
-  swapped[2] = valuePtr[1];
-  swapped[3] = valuePtr[0];
-  memcpy(&result, swapped, sizeof(result));
-  return result;
+float convertToFloat() {
+  return 0;
 }
 
 uint32_t combineAndSwap(uint16_t high, uint16_t low) {

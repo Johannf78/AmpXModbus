@@ -82,27 +82,32 @@ Preferences preferences;
 
 void processRegisters(uint16_t* results, uint16_t numRegisters,
                       const String& friendlyLabel, const String& docLabel) {
-
-  Serial.println("");
-  Serial.println(friendlyLabel);
-  for (uint16_t i = 0; i < numRegisters; i += 1) {  
-    Serial.print("Register " + String(i) + ": ");
+  for (uint16_t i = 0; i < numRegisters; i += 2) {
+    /*
+    Serial.print(friendlyLabel);
+    Serial.print(" Register ");
+    Serial.print(i);
+    Serial.print(": ");
     Serial.println(results[i]);
-  }
+    Serial.print(friendlyLabel);
+    Serial.print(" Register ");
+    Serial.print(i + 1);
+    Serial.print(": ");
+    Serial.println(results[i + 1]);
+    */
+    uint32_t combinedValue = combineAndSwap(results[i], results[i + 1]);
 
-  uint32_t combinedValue = combineAndSwap(results[1], results[2]);
+    float value = convertToFloat(combinedValue);
 
-  float value = convertToFloat(combinedValue);
+    //Update the json document with the value
+    JsonDoc[docLabel] = String(value, 2);
 
-  //Update the json document with the value
-  JsonDoc[docLabel] = String(value, 2);
-
-  /*
+    /*
     Serial.print(friendlyLabel);
     Serial.print(": ");
     Serial.println(value);
-  */
-  
+    */
+  }
 }
 
 void processRegistersInt64(uint16_t* responseBuffer, uint16_t numRegisters,
@@ -319,7 +324,7 @@ void handlePowerMeter(int meterNumber = 1) {
   for (int i = 1; i <= maxNumberOfMeters; i++)
   {
 
-    // Read Serial number registers 70 and 71 - Serial number.
+    // Read Serial number registers 70 and 71 - Serial number,
     if (readHoldingRegisters(i, 70, 2, responseBuffer)) {  // i is the Modbus slave ID
       uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
       if (i = 1){
