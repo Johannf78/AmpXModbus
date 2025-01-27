@@ -92,24 +92,39 @@ bool readHoldingRegisters(uint8_t slaveID, uint16_t startAddress, uint16_t numRe
 }
 
 
-float convertToFloat() {
-  return 0;
+float combineRegistersToFloat(uint16_t reg0, uint16_t reg1) {
+/*
+Combine the two 16-bit values into a 32-bit value in little endian order.
+Convert the combined 32-bit value to a float.
+Return the float value.
+*/
+
+    // Combine the two 16-bit values into a 32-bit value in little endian order
+    uint32_t combined = ((uint32_t)reg0 << 16) | reg1;
+    
+    // Convert the combined 32-bit value to a float
+    float result;
+    memcpy(&result, &combined, sizeof(result));
+    
+    return result;
 }
 
-uint32_t combineAndSwap(uint16_t high, uint16_t low) {
+
+
+uint32_t combineRegistersToInt32(uint16_t reg1, uint16_t reg2) {
   // Combine the two 16-bit values into a 32-bit value in little endian order
-  uint32_t combined = ((uint32_t)high << 16) | low;
+  uint32_t combined = ((uint32_t)reg1 << 16) | reg2;
   return combined;
 }
 
 
-uint64_t combineAndSwap64(uint16_t reg0, uint16_t reg1, uint16_t reg2, uint16_t reg3) {
+uint64_t combineAndSwap64(uint16_t reg1, uint16_t reg2, uint16_t reg3, uint16_t reg4) {
   uint64_t combined = 0;
   // Combine in reverse order for little endian
-  combined |= (uint64_t)reg3;
-  combined |= (uint64_t)reg2 << 16;
-  combined |= (uint64_t)reg1 << 32;
-  combined |= (uint64_t)reg0 << 48;
+  combined |= (uint64_t)reg4;
+  combined |= (uint64_t)reg3 << 16;
+  combined |= (uint64_t)reg2 << 32;
+  combined |= (uint64_t)reg1 << 48;
   return combined;
 }
 

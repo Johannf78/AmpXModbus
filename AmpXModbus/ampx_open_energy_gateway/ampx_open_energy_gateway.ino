@@ -46,6 +46,11 @@ JsonDocument JsonDoc;
 #define TX_PIN 17
 #define HTTP 80
 
+//Constant data types
+const int dataTypeInt32 = 1;
+const int dataTypeInt64 = 2;
+const int dataTypeFloat = 3;
+
 const char* ssid = "FRITZ!Family";
 const char* password = "03368098169909319946";
 
@@ -79,67 +84,12 @@ WebServer server(HTTP);
 WebSocketsServer webSocket = WebSocketsServer(81);
 
 Preferences preferences;
-
-void processRegisters(uint16_t* results, uint16_t numRegisters,
-                      const String& friendlyLabel, const String& docLabel) {
-  for (uint16_t i = 0; i < numRegisters; i += 2) {
-    /*
-    Serial.print(friendlyLabel);
-    Serial.print(" Register ");
-    Serial.print(i);
-    Serial.print(": ");
-    Serial.println(results[i]);
-    Serial.print(friendlyLabel);
-    Serial.print(" Register ");
-    Serial.print(i + 1);
-    Serial.print(": ");
-    Serial.println(results[i + 1]);
-    */
-    uint32_t combinedValue = combineAndSwap(results[i], results[i + 1]);
-
-    float value = convertToFloat(combinedValue);
-
-    //Update the json document with the value
-    JsonDoc[docLabel] = String(value, 2);
-
-    /*
-    Serial.print(friendlyLabel);
-    Serial.print(": ");
-    Serial.println(value);
-    */
-  }
+/*
+enum floatInt32orInt64
+{
+  isfloat,isInt32,isInt64
 }
-
-void processRegistersInt64(uint16_t* responseBuffer, uint16_t numRegisters,
-                           const String& friendlyLabel, const String& docLabel) {
-  // Print registers in hex
-  /*
-    Serial.print("Registers (hex): ");
-    for(int i = 0; i < numRegisters; i++) {
-        Serial.print("0x");
-        Serial.print(responseBuffer[i], HEX);
-        Serial.print(" ");
-    }
-    Serial.println();
-    */
-
-  uint64_t value = combineAndSwap64(responseBuffer[0], responseBuffer[1],
-                                    responseBuffer[2], responseBuffer[3]);
-
-  /*
-    Serial.print("Energy: ");
-    Serial.println(value);
-    Serial.print("Energy (hex): 0x");
-    Serial.println((unsigned long)energy, HEX);
-    */
-
-  //Update the json document with the value
-  JsonDoc[docLabel] = String((float)value / 1000, 2);
-
-  //Serial.print(friendlyLabel);
-  //Serial.print(": ");
-  //Serial.println(value);
-}
+*/
 
 void initNvs() {
   if (preferences.begin("app", false)) {
@@ -313,52 +263,144 @@ void handleUpdate() {
   doOTAUpdate();
 }
 
+void processRegisters(uint16_t* results, uint16_t numRegisters, int registerDataType,
+                      const String& friendlyLabel, const String& docLabel) {
+
+  Serial.println("");
+  Serial.println(friendlyLabel);  
+  for (uint16_t i = 0; i < numRegisters; i++) {
+    Serial.print("Register " + String(i) + ": ");
+    Serial.println(results[i]);
+  }
+  
+  float floatValue = 0;
+  uint32_t intValue = 0;
+  String stringValue = "";
+
+  if (registerDataType == dataTypeInt32){
+    Serial.println("dataTypeInt32");
+    intValue = combineRegistersToInt32(results[0], results[1]);
+    stringValue = String(intValue); //convert integer to sting
+  }
+  if (registerDataType == dataTypeInt64){
+    Serial.println("dataTypeInt64");
+    
+  }
+  if (registerDataType == dataTypeFloat){
+    Serial.println("dataTypeFloat");
+    floatValue = combineRegistersToFloat(results[0], results[1]);
+    stringValue = String(floatValue,2); //convert float to string with two decimal places
+  }
+/*
+  //uint32_t combinedValue = combineAndSwap(results[0], results[1]);
+
+  //float value = convertToFloat(combinedValue);
+
+  //int value = combineRegistersToInt32(results[0], results[1]);
+
+  //String value = "Test";
+
+  //Update the json document with the value
+  //JsonDoc[docLabel] = value;
+
+  */
+  Serial.print(friendlyLabel);
+  Serial.print(": ");
+  Serial.println(stringValue);
+  
+}
+
+//TODO: Delete this function
+void processRegistersInt64(uint16_t* responseBuffer, uint16_t numRegisters,
+                           const String& friendlyLabel, const String& docLabel) {
+  // Print registers in hex
+  /*
+    Serial.print("Registers (hex): ");
+    for(int i = 0; i < numRegisters; i++) {
+        Serial.print("0x");
+        Serial.print(responseBuffer[i], HEX);
+        Serial.print(" ");
+    }
+    Serial.println();
+    */
+
+  uint64_t value = combineAndSwap64(responseBuffer[0], responseBuffer[1],
+                                    responseBuffer[2], responseBuffer[3]);
+
+  /*
+    Serial.print("Energy: ");
+    Serial.println(value);
+    Serial.print("Energy (hex): 0x");
+    Serial.println((unsigned long)energy, HEX);
+    */
+
+  //Update the json document with the value
+  JsonDoc[docLabel] = String((float)value / 1000, 2);
+
+  //Serial.print(friendlyLabel);
+  //Serial.print(": ");
+  //Serial.println(value);
+}
+
+
+
 void handlePowerMeter(int meterNumber = 1) {
   //These variable are populated from the data read on Modbus, they are reused for different parameters, voltage, current, power, etc.
   // uint16_t results[32];
   uint16_t responseBuffer[4];
-  float value;
+  //float value;
 
   String meterPrefix = "m" + String(meterNumber) + "_";
 
-  for (int i = 1; i <= maxNumberOfMeters; i++)
-  {
+   // Read Serial number, registers 70 and 71.
+  if (readHoldingRegisters(meterNumber, 70, 2, responseBuffer)) { // meterNumber is the Modbus slave ID
+    
+    Serial.println("");
+    Serial.println("Serial of meterNumber: " + String(meterNumber));
+    Serial.print("Register 70: ");
+    Serial.println(responseBuffer[0]);
+    Serial.print("Register 71: ");
+    Serial.println(responseBuffer[1]);
+    uint32_t combinedValue = combineRegistersToInt32(responseBuffer[0], responseBuffer[1]);
+    Serial.print("Serial number: ");
+    Serial.println(combinedValue);
 
-    // Read Serial number registers 70 and 71 - Serial number,
-    if (readHoldingRegisters(i, 70, 2, responseBuffer)) {  // i is the Modbus slave ID
-      uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
-      if (i = 1){
-       m1_serial_number = combinedValue;
-      }
-      if (i = 2){
-       m2_serial_number = combinedValue;
-      }
-      if (i = 3){
-       m3_serial_number = combinedValue;
-      }
-      if (i = 4){
-       m4_serial_number = combinedValue;
-      }
-    } else {
-     // Serial.println("Error reading registers 70 and 71");
+    processRegisters(responseBuffer, 2, dataTypeInt32, "Serial number", meterPrefix + "serial");
+    
+      
+    if (meterNumber == 1){
+      m1_serial_number = combinedValue;
     }
+    if (meterNumber == 2){
+      m2_serial_number = combinedValue;
+    }
+    if (meterNumber == 3){
+      m3_serial_number = combinedValue;
+    }
+    if (meterNumber == 4){
+      m4_serial_number = combinedValue;
+    }
+    
+    } else {
+    Serial.println("Error reading serial number");
   }
+ 
 
   // Read voltage on L1
   if (readHoldingRegisters(meterNumber, 1010, 2, responseBuffer)) { // meterNumber is the Modbus slave ID
-    processRegisters(responseBuffer, 2, "Voltage L1", meterPrefix + "voltage_L1");
+    processRegisters(responseBuffer, 2, dataTypeFloat, "Voltage L1", meterPrefix + "voltage_L1");
     } else {
     Serial.println("Error reading voltage registers");
   }
   // Read voltage on L2
   if (readHoldingRegisters(meterNumber, 1012, 2, responseBuffer)) {  // meterNumber is the Modbus slave ID
-    processRegisters(responseBuffer, 2, "Voltage L2", meterPrefix + "voltage_L2");
+    processRegisters(responseBuffer, 2, dataTypeFloat, "Voltage L2", meterPrefix + "voltage_L2");
   } else {
     Serial.println("Error reading voltage registers");
   }
   // Read voltage on L3
   if (readHoldingRegisters(meterNumber, 1014, 2, responseBuffer)) { 
-    processRegisters(responseBuffer, 2, "Voltage L3", meterPrefix + "voltage_L3");
+    processRegisters(responseBuffer, 2, dataTypeFloat, "Voltage L3", meterPrefix + "voltage_L3");
   } else {
     Serial.println("Error reading voltage registers");
   }
@@ -366,81 +408,81 @@ void handlePowerMeter(int meterNumber = 1) {
 
   // Read current on L1
   if (readHoldingRegisters(meterNumber, 1000, 2, responseBuffer)) { 
-    processRegisters(responseBuffer, 2, "Current L1", meterPrefix + "current_L1");
+    processRegisters(responseBuffer, 2, dataTypeFloat, "Current L1", meterPrefix + "current_L1");
   } else {
     Serial.println("Error reading current registers");
   }
   // Read current on L2
   if (readHoldingRegisters(meterNumber, 1002, 2, responseBuffer)) { 
-    processRegisters(responseBuffer, 2, "Current L2", meterPrefix + "current_L2");
+    processRegisters(responseBuffer, 2, dataTypeFloat, "Current L2", meterPrefix + "current_L2");
   } else {
     Serial.println("Error reading current registers");
   }
   // Read current on L3
   if (readHoldingRegisters(meterNumber, 1004, 2, responseBuffer)) {
-    processRegisters(responseBuffer, 2, "Current L3", meterPrefix + "current_L3");
+    processRegisters(responseBuffer, 2, dataTypeFloat, "Current L3", meterPrefix + "current_L3");
   } else {
     Serial.println("Error reading current registers");
   }
   // Read current average
   if (readHoldingRegisters(meterNumber, 1006, 2, responseBuffer)) {
-    processRegisters(responseBuffer, 2, "Current Avg", meterPrefix + "current_avg");
+    processRegisters(responseBuffer, 2, dataTypeFloat, "Current Avg", meterPrefix + "current_avg");
   } else {
     Serial.println("Error reading current registers");
   }
 
 
-
   // Read Active Power on L1
   if (readHoldingRegisters(meterNumber, 1028, 2, responseBuffer)) { 
-    processRegisters(responseBuffer, 2, "Active Power L1", meterPrefix + "active_power_L1");
+    processRegisters(responseBuffer, 2, dataTypeFloat, "Active Power L1", meterPrefix + "active_power_L1");
   } else {
     Serial.println("Error reading Active Power registers");
   }
   // Read Active Power on L2
   if (readHoldingRegisters(meterNumber, 1030, 2, responseBuffer)) { 
-    processRegisters(responseBuffer, 2, "Active Power L2", meterPrefix + "active_power_L2");
+    processRegisters(responseBuffer, 2, dataTypeFloat, "Active Power L2", meterPrefix + "active_power_L2");
   } else {
     Serial.println("Error reading Active Power registers");
   }
   // Read Power on L3
   if (readHoldingRegisters(meterNumber, 1032, 2, responseBuffer)) { 
-    processRegisters(responseBuffer, 2, "Active Power L3", meterPrefix + "active_power_L3");
+    processRegisters(responseBuffer, 2, dataTypeFloat, "Active Power L3", meterPrefix + "active_power_L3");
   } else {
     Serial.println("Error reading Active Power registers");
   }
   // Read Total Power
   if (readHoldingRegisters(meterNumber, 1034, 2, responseBuffer)) { 
-    processRegisters(responseBuffer, 2, "Active Power Total", meterPrefix + "active_power_tot");
+    processRegisters(responseBuffer, 2, dataTypeFloat, "Active Power Total", meterPrefix + "active_power_tot");
   } else {
     Serial.println("Error reading Active Power registers");
   }
-
+/*
   //Read Active Energy Imported L1
   if (readHoldingRegisters64(meterNumber, 2500, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, "Energy Imported L1", meterPrefix + "active_energy_imported_L1");
+    processRegistersInt64(responseBuffer, 4, dataTypeInt64, "Energy Imported L1", meterPrefix + "active_energy_imported_L1");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
   //Read Active Energy Imported L2
   if (readHoldingRegisters64(meterNumber, 2504, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, "Energy Imported L2", meterPrefix + "active_energy_imported_L2");
+    processRegistersInt64(responseBuffer, 4, dataTypeInt64, "Energy Imported L2", meterPrefix + "active_energy_imported_L2");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
   //Read Active Energy Imported L3
   if (readHoldingRegisters64(meterNumber, 2508, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, "Energy Imported L3", meterPrefix + "active_energy_imported_L3");
+    processRegistersInt64(responseBuffer, 4, dataTypeInt64, "Energy Imported L3", meterPrefix + "active_energy_imported_L3");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
   //Read Active Energy Imported Total
   if (readHoldingRegisters64(meterNumber, 2512, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, "Energy Imported Total", meterPrefix + "active_energy_imported_tot");
-     processRegistersInt64(responseBuffer, 4, "Energy Imported Total", meterPrefix + "active_energy_imported_tot_summary");
+    processRegistersInt64(responseBuffer, 4, dataTypeInt64, "Energy Imported Total", meterPrefix + "active_energy_imported_tot");
+     processRegistersInt64(responseBuffer, 4, dataTypeInt64, "Energy Imported Total", meterPrefix + "active_energy_imported_tot_summary");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
+  */
 }
 
 void handleWebSocket() {
@@ -527,7 +569,7 @@ void detectNumberOfMeters(){
   for (int i = 1; i <= maxNumberOfMeters; i++) {
     // Read Serial number registers 70 and 71
     if (readHoldingRegisters(i, 70, 2, responseBuffer)) {  // i is the Modbus slave ID
-      uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
+      uint32_t combinedValue = combineRegistersToInt32(responseBuffer[0], responseBuffer[1]);
       //Serial.print("Serial Number: ");
       //Serial.println(combinedValue);
       //Update the number of meters if able to read its serial number

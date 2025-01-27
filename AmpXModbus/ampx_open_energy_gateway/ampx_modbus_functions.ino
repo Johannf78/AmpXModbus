@@ -92,26 +92,27 @@ bool readHoldingRegisters(uint8_t slaveID, uint16_t startAddress, uint16_t numRe
 }
 
 
-float convertToFloat(uint32_t value) {
-  float result;
-  uint8_t *valuePtr = (uint8_t *)&value;
-  uint8_t swapped[4];
-  swapped[0] = valuePtr[3];
-  swapped[1] = valuePtr[2];
-  swapped[2] = valuePtr[1];
-  swapped[3] = valuePtr[0];
-  memcpy(&result, swapped, sizeof(result));
-  return result;
-}
+float combineRegistersToFloat(uint16_t reg0, uint16_t reg1) {
 /*
-uint32_t combineAndSwap(uint16_t highWord, uint16_t lowWord) {
-  uint32_t combined = ((uint32_t)highWord << 16) | lowWord;
-  return ((combined & 0xFF000000) >> 24) | ((combined & 0x00FF0000) >> 8) | ((combined & 0x0000FF00) << 8) | ((combined & 0x000000FF) << 24);
-}
+Combine the two 16-bit values into a 32-bit value in little endian order.
+Convert the combined 32-bit value to a float.
+Return the float value.
 */
-uint32_t combineAndSwap(uint16_t highWord, uint16_t lowWord) {
+
+    // Combine the two 16-bit values into a 32-bit value in little endian order
+    uint32_t combined = ((uint32_t)reg0 << 16) | reg1;
+    
+    // Convert the combined 32-bit value to a float
+    float result;
+    memcpy(&result, &combined, sizeof(result));
+    
+    return result;
+}
+
+
+uint32_t combineRegistersToInt32(uint16_t reg0, uint16_t reg1) {
   // Combine the two 16-bit values into a 32-bit value in little endian order
-  uint32_t combined = ((uint32_t)highWord << 16) | lowWord;
+  uint32_t combined = ((uint32_t)reg0 << 16) | reg1;
   return combined;
 }
 

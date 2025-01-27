@@ -24,7 +24,7 @@ void handlePowerMeter()
     Serial.println(responseBuffer[0]);
     Serial.print("Register 71: ");
     Serial.println(responseBuffer[1]);
-    uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
+    uint32_t combinedValue = combineRegistersToInt32(responseBuffer[0], responseBuffer[1]);
     Serial.print("Combined and Swapped Value: ");
     Serial.println(combinedValue);
 
@@ -58,9 +58,14 @@ void processRegisters(uint16_t* results, uint16_t numRegisters,
   Serial.println(combinedValue);    
   */
 
-  float value = convertToFloat();
-  Serial.print(friendlyLabel + ": ");
-  Serial.println(value);    
+  if (numRegisters == 2) {    
+    //float value = convertToFloat(results);
+    float value = combineRegistersToFloat(results[0], results[1]);
+    Serial.print(friendlyLabel + ": ");
+    Serial.println(value);    
+  } else {
+    Serial.print(friendlyLabel + ": ovf");
+  }
 }
 
 void setup() {
