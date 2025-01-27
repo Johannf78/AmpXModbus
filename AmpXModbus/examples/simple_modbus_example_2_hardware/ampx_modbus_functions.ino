@@ -104,10 +104,12 @@ float convertToFloat(uint32_t value) {
   return result;
 }
 
-uint32_t combineAndSwap(uint16_t highWord, uint16_t lowWord) {
-  uint32_t combined = ((uint32_t)highWord << 16) | lowWord;
-  return ((combined & 0xFF000000) >> 24) | ((combined & 0x00FF0000) >> 8) | ((combined & 0x0000FF00) << 8) | ((combined & 0x000000FF) << 24);
+uint32_t combineAndSwap(uint16_t high, uint16_t low) {
+  // Combine the two 16-bit values into a 32-bit value in little endian order
+  uint32_t combined = ((uint32_t)high << 16) | low;
+  return combined;
 }
+
 
 uint64_t combineAndSwap64(uint16_t reg0, uint16_t reg1, uint16_t reg2, uint16_t reg3) {
   uint64_t combined = 0;

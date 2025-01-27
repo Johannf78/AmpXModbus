@@ -6,6 +6,7 @@ ampx_modbus_functions.ino is automatically included as it is in the same folder 
 
 //This library is required to use digital pins as a software serial port. EspSoftwareSerial - Download and include this libarary in the library manager.
 //#include <SoftwareSerial.h>
+//If using hardware serial, such as the esp32 or Arduino Mega, then it is not nessessary to use software serial.
 
 // Define the RS485 control pins
 #define MAX485_DE 4 //Green

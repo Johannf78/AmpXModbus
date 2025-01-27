@@ -29,6 +29,8 @@ Select "node32s" under the boards.
 #include <Update.h>
 //Install the one by Vlodomyr Shymanskyy, https://github.com/vshymanskyy/Preferences
 #include <Preferences.h>
+//Install the library by tzapu, https://github.com/tzapu/WiFiManager, https://www.youtube.com/watch?v=Errh7LEEug0
+#include <WiFiManager.h>
 
 //The HTML code is stored in a seperate file, this makes the code easier to read.
 #include "webpage.h"
@@ -80,32 +82,27 @@ Preferences preferences;
 
 void processRegisters(uint16_t* results, uint16_t numRegisters,
                       const String& friendlyLabel, const String& docLabel) {
-  for (uint16_t i = 0; i < numRegisters; i += 2) {
-    /*
-    Serial.print(friendlyLabel);
-    Serial.print(" Register ");
-    Serial.print(i);
-    Serial.print(": ");
+
+  Serial.println("");
+  Serial.println(friendlyLabel);
+  for (uint16_t i = 0; i < numRegisters; i += 1) {  
+    Serial.print("Register " + String(i) + ": ");
     Serial.println(results[i]);
-    Serial.print(friendlyLabel);
-    Serial.print(" Register ");
-    Serial.print(i + 1);
-    Serial.print(": ");
-    Serial.println(results[i + 1]);
-    */
-    uint32_t combinedValue = combineAndSwap(results[i], results[i + 1]);
+  }
 
-    float value = convertToFloat(combinedValue);
+  uint32_t combinedValue = combineAndSwap(results[1], results[2]);
 
-    //Update the json document with the value
-    JsonDoc[docLabel] = String(value, 2);
+  float value = convertToFloat(combinedValue);
 
-    /*
+  //Update the json document with the value
+  JsonDoc[docLabel] = String(value, 2);
+
+  /*
     Serial.print(friendlyLabel);
     Serial.print(": ");
     Serial.println(value);
-    */
-  }
+  */
+  
 }
 
 void processRegistersInt64(uint16_t* responseBuffer, uint16_t numRegisters,
@@ -152,19 +149,40 @@ void initWiFi() {
   WiFi.setHostname("AmpX-Energy-Gateway");
 
   // Connect to the Wi-Fi network
-  WiFi.begin(ssid, password);
+  /*WiFi.begin(ssid, password);
 
   Serial.print("Now connecting to WiFi...");
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.print(".");//Print more dots while connecting 
+  }*/
+
+  WiFiManager wifiManager;
+
+  // If you've previously connected to your WiFi with this ESP32,
+  // WiFi manager will more than likely not do anything.
+  // Uncomment this if you want to force it to delete your old WiFi details.
+  //wifiManager.resetSettings();
+
+  //Tries to connect to last known WiFi details
+  //if it does not connect it starts an access point with the specified name
+  //here  "AutoConnectAP"
+  //and goes into a blocking loop awaiting configuration
+  if (!wifiManager.autoConnect("AmpX-Energy-Gateway-AP", "")) {
+    Serial.println("failed to connect and hit timeout");
+    //reset and try again, or maybe put it to deep sleep
+    ESP.restart();
+    delay(1000);
   }
+
   Serial.println("");
   Serial.println("Connected to Wi-Fi");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
   Serial.print("Signal strength: ");
   Serial.println(WiFi.RSSI());
+  Serial.print("WiFi.getHostname: ");
+  Serial.println(WiFi.getHostname());
 
   // OTA setup
   ArduinoOTA.onStart([]() {
@@ -219,16 +237,42 @@ void handleChangeMetersName() {
   String m1_name = server.arg("m1_name");
   preferences.putString("m1_name", m1_name);
   Serial.println("m1_name: " + m1_name);
+
+  String m2_name = server.arg("m2_name");
+  preferences.putString("m2_name", m2_name);
+  Serial.println("m2_name: " + m2_name);
+
+  String m3_name = server.arg("m3_name");
+  preferences.putString("m3_name", m3_name);
+  Serial.println("m3_name: " + m3_name);
+
+  String m4_name = server.arg("m4_name");
+  preferences.putString("m4_name", m4_name);
+  Serial.println("m4_name: " + m4_name);
+
+
   server.send(200, "text/html", "Updated successfully. <br><a href='/settings'>settings</a>");
 }
 
 void handleSettings()
 {
   String page = webpage_settings;
+  //Use javascript to hide settings for meters not present.
   page.replace("numberOfMetersValue", String(numberOfMeters));
+
   String m1_name = preferences.getString("m1_name");
   Serial.println("m1_name_value: " + m1_name);
   page.replace("m1_name_value", m1_name);
+
+  String m2_name = preferences.getString("m2_name");
+  Serial.println("m2_name_value: " + m2_name);
+  page.replace("m2_name_value", m2_name);
+
+    //Replace the string m1_serial_number with the actual serial number, done here as it does not update regularly like values.
+  page.replace("m1_serial_number", m1_serial_number);
+  page.replace("m2_serial_number", m2_serial_number);
+  page.replace("m3_serial_number", m3_serial_number);
+
   server.send(200, "text/html", page);
 }
 
@@ -244,9 +288,18 @@ void handleRoot() {
   webpage.replace("m3_serial_number", m3_serial_number);
   webpage.replace("numberOfMetersValue", String(numberOfMeters));
 
-  //Replace the stringm1_name with the setting saved in the permanent memory
-  String m1_name = preferences.getString("m1_name");
-  webpage.replace("m1_name", ", Name: " + m1_name);
+  /*
+  for (int i = 1; i <= maxNumberOfMeters; i++)
+  {
+    String meterPrefix = "m" + String(i) + "_";
+    //Copy the saved meter name from the preferences to the json doc, this is so that the name can be displayed on the page, even if the name has been changed recently.
+    JsonDoc[meterPrefix + "name"] = preferences.getString(meterPrefix + "name");
+  }
+  */
+  JsonDoc["m1_name"] = preferences.getString("m1_name");
+  JsonDoc["m2_name"] = preferences.getString("m2_name");
+  JsonDoc["m3_name"] = preferences.getString("m3_name");
+  JsonDoc["m4_name"] = preferences.getString("m4_name");
 
   server.send(200, "text/html", webpage);
 }
@@ -265,7 +318,8 @@ void handlePowerMeter(int meterNumber = 1) {
 
   for (int i = 1; i <= maxNumberOfMeters; i++)
   {
-    // Read Serial number registers 70 and 71
+
+    // Read Serial number registers 70 and 71 - Serial number.
     if (readHoldingRegisters(i, 70, 2, responseBuffer)) {  // i is the Modbus slave ID
       uint32_t combinedValue = combineAndSwap(responseBuffer[0], responseBuffer[1]);
       if (i = 1){
