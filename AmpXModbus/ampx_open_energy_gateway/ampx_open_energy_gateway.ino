@@ -46,7 +46,7 @@ JsonDocument JsonDoc;
 #define TX_PIN 17
 #define HTTP 80
 
-//Constant data types
+//Constant data types, used in the processRegisters function.
 const int dataTypeInt32 = 1;
 const int dataTypeInt64 = 2;
 const int dataTypeFloat = 3;
@@ -263,32 +263,34 @@ void handleUpdate() {
   doOTAUpdate();
 }
 
-void processRegisters(uint16_t* results, uint16_t numRegisters, int registerDataType,
+void processRegisters(uint16_t* responseBuffer, uint16_t numRegisters, int registerDataType,
                       const String& friendlyLabel, const String& docLabel) {
 
   Serial.println("");
   Serial.println(friendlyLabel);  
   for (uint16_t i = 0; i < numRegisters; i++) {
-    Serial.print("Register " + String(i) + ": ");
-    Serial.println(results[i]);
+    Serial.print("responseBuffer " + String(i) + ": ");
+    Serial.println(responseBuffer[i]);
   }
   
   float floatValue = 0;
-  uint32_t intValue = 0;
+  uint32_t int32Value = 0;
+  uint64_t int64Value = 0;
   String stringValue = "";
 
   if (registerDataType == dataTypeInt32){
     Serial.println("dataTypeInt32");
-    intValue = combineRegistersToInt32(results[0], results[1]);
-    stringValue = String(intValue); //convert integer to sting
+    int32Value = combineRegistersToInt32(responseBuffer[0], responseBuffer[1]);
+    stringValue = String(int32Value); //convert integer 32 to string
   }
   if (registerDataType == dataTypeInt64){
     Serial.println("dataTypeInt64");
-    
+    int64Value = combineAndSwap64(responseBuffer[0], responseBuffer[1], responseBuffer[2], responseBuffer[3]);
+    stringValue = String((float)int64Value / 1000, 2); //convert integer 64 to string
   }
   if (registerDataType == dataTypeFloat){
     Serial.println("dataTypeFloat");
-    floatValue = combineRegistersToFloat(results[0], results[1]);
+    floatValue = combineRegistersToFloat(responseBuffer[0], responseBuffer[1]);
     stringValue = String(floatValue,2); //convert float to string with two decimal places
   }
 /*
@@ -299,11 +301,12 @@ void processRegisters(uint16_t* results, uint16_t numRegisters, int registerData
   //int value = combineRegistersToInt32(results[0], results[1]);
 
   //String value = "Test";
+  */
 
   //Update the json document with the value
-  //JsonDoc[docLabel] = value;
+  JsonDoc[docLabel] = stringValue;
 
-  */
+
   Serial.print(friendlyLabel);
   Serial.print(": ");
   Serial.println(stringValue);
@@ -311,10 +314,11 @@ void processRegisters(uint16_t* results, uint16_t numRegisters, int registerData
 }
 
 //TODO: Delete this function
+/*
 void processRegistersInt64(uint16_t* responseBuffer, uint16_t numRegisters,
                            const String& friendlyLabel, const String& docLabel) {
   // Print registers in hex
-  /*
+  
     Serial.print("Registers (hex): ");
     for(int i = 0; i < numRegisters; i++) {
         Serial.print("0x");
@@ -322,26 +326,25 @@ void processRegistersInt64(uint16_t* responseBuffer, uint16_t numRegisters,
         Serial.print(" ");
     }
     Serial.println();
-    */
+  
 
   uint64_t value = combineAndSwap64(responseBuffer[0], responseBuffer[1],
                                     responseBuffer[2], responseBuffer[3]);
 
-  /*
-    Serial.print("Energy: ");
-    Serial.println(value);
-    Serial.print("Energy (hex): 0x");
-    Serial.println((unsigned long)energy, HEX);
-    */
-
+  Serial.print("Energy: ");
+  Serial.println(value);
+  Serial.print("Energy (hex): 0x");
+  Serial.println((unsigned long)energy, HEX);
+  
   //Update the json document with the value
   JsonDoc[docLabel] = String((float)value / 1000, 2);
 
-  //Serial.print(friendlyLabel);
-  //Serial.print(": ");
-  //Serial.println(value);
+  Serial.println("Energy from processRegistersInt64");
+  Serial.print(friendlyLabel);
+  Serial.print(": ");
+  Serial.println(value);
 }
-
+*/
 
 
 void handlePowerMeter(int meterNumber = 1) {
@@ -456,13 +459,15 @@ void handlePowerMeter(int meterNumber = 1) {
   } else {
     Serial.println("Error reading Active Power registers");
   }
-/*
+
   //Read Active Energy Imported L1
   if (readHoldingRegisters64(meterNumber, 2500, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, dataTypeInt64, "Energy Imported L1", meterPrefix + "active_energy_imported_L1");
+    processRegisters(responseBuffer, 4, dataTypeInt64, "Energy Imported L1", meterPrefix + "active_energy_imported_L1");
+    //processRegistersInt64(responseBuffer, 4, "Energy Imported L1 two", meterPrefix + "active_energy_imported_L1");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
+/*
   //Read Active Energy Imported L2
   if (readHoldingRegisters64(meterNumber, 2504, 4, responseBuffer)) {
     processRegistersInt64(responseBuffer, 4, dataTypeInt64, "Energy Imported L2", meterPrefix + "active_energy_imported_L2");
