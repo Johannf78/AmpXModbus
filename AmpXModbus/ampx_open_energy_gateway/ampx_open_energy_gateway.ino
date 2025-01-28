@@ -206,7 +206,7 @@ void handleChangeMetersName() {
   Serial.println("m4_name: " + m4_name);
 
 
-  server.send(200, "text/html", "Updated successfully. <br><a href='/settings'>settings</a>");
+  server.send(200, "text/html", "Updated successfully. <br>Back to:<a href='/'>Home</a> | <a href='/settings'>Settings</a>");
 }
 
 void handleSettings()
@@ -227,6 +227,7 @@ void handleSettings()
   page.replace("m1_serial_number", m1_serial_number);
   page.replace("m2_serial_number", m2_serial_number);
   page.replace("m3_serial_number", m3_serial_number);
+  page.replace("m4_serial_number", m4_serial_number);
 
   server.send(200, "text/html", page);
 }
@@ -266,11 +267,11 @@ void handleUpdate() {
 void processRegisters(uint16_t* responseBuffer, uint16_t numRegisters, int registerDataType,
                       const String& friendlyLabel, const String& docLabel) {
 
-  Serial.println("");
-  Serial.println(friendlyLabel);  
+  //Serial.println("");
+  //Serial.println(friendlyLabel);  
   for (uint16_t i = 0; i < numRegisters; i++) {
-    Serial.print("responseBuffer " + String(i) + ": ");
-    Serial.println(responseBuffer[i]);
+    //Serial.print("responseBuffer " + String(i) + ": ");
+    //Serial.println(responseBuffer[i]);
   }
   
   float floatValue = 0;
@@ -279,17 +280,17 @@ void processRegisters(uint16_t* responseBuffer, uint16_t numRegisters, int regis
   String stringValue = "";
 
   if (registerDataType == dataTypeInt32){
-    Serial.println("dataTypeInt32");
+    //Serial.println("dataTypeInt32");
     int32Value = combineRegistersToInt32(responseBuffer[0], responseBuffer[1]);
     stringValue = String(int32Value); //convert integer 32 to string
   }
   if (registerDataType == dataTypeInt64){
-    Serial.println("dataTypeInt64");
-    int64Value = combineAndSwap64(responseBuffer[0], responseBuffer[1], responseBuffer[2], responseBuffer[3]);
+    //Serial.println("dataTypeInt64");
+    int64Value = combineRegistersToInt64(responseBuffer[0], responseBuffer[1], responseBuffer[2], responseBuffer[3]);
     stringValue = String((float)int64Value / 1000, 2); //convert integer 64 to string
   }
   if (registerDataType == dataTypeFloat){
-    Serial.println("dataTypeFloat");
+    //Serial.println("dataTypeFloat");
     floatValue = combineRegistersToFloat(responseBuffer[0], responseBuffer[1]);
     stringValue = String(floatValue,2); //convert float to string with two decimal places
   }
@@ -306,7 +307,7 @@ void processRegisters(uint16_t* responseBuffer, uint16_t numRegisters, int regis
   //Update the json document with the value
   JsonDoc[docLabel] = stringValue;
 
-
+  Serial.print("docLabel: " + docLabel + ", ");
   Serial.print(friendlyLabel);
   Serial.print(": ");
   Serial.println(stringValue);
@@ -352,23 +353,25 @@ void handlePowerMeter(int meterNumber = 1) {
   // uint16_t results[32];
   uint16_t responseBuffer[4];
   //float value;
+  Serial.println("");
 
   String meterPrefix = "m" + String(meterNumber) + "_";
 
    // Read Serial number, registers 70 and 71.
   if (readHoldingRegisters(meterNumber, 70, 2, responseBuffer)) { // meterNumber is the Modbus slave ID
     
-    Serial.println("");
-    Serial.println("Serial of meterNumber: " + String(meterNumber));
-    Serial.print("Register 70: ");
-    Serial.println(responseBuffer[0]);
-    Serial.print("Register 71: ");
-    Serial.println(responseBuffer[1]);
+    //Serial.println("");
+    //Serial.println("Serial of meterNumber: " + String(meterNumber));
+    //Serial.print("Register 70: ");
+    //Serial.println(responseBuffer[0]);
+    //Serial.print("Register 71: ");
+    //Serial.println(responseBuffer[1]);
     uint32_t combinedValue = combineRegistersToInt32(responseBuffer[0], responseBuffer[1]);
-    Serial.print("Serial number: ");
-    Serial.println(combinedValue);
+    //Serial.print("Serial number: ");
+    //Serial.println(combinedValue);
 
-    processRegisters(responseBuffer, 2, dataTypeInt32, "Serial number", meterPrefix + "serial");
+    //Do not add the serial number to the Json doc, it will be added to the document by the find and replace function in the root.
+    //processRegisters(responseBuffer, 2, dataTypeInt32, "Serial number", meterPrefix + "serial");
     
       
     if (meterNumber == 1){
@@ -461,33 +464,32 @@ void handlePowerMeter(int meterNumber = 1) {
   }
 
   //Read Active Energy Imported L1
-  if (readHoldingRegisters64(meterNumber, 2500, 4, responseBuffer)) {
+  if (readHoldingRegisters(meterNumber, 2500, 4, responseBuffer)) {
     processRegisters(responseBuffer, 4, dataTypeInt64, "Energy Imported L1", meterPrefix + "active_energy_imported_L1");
     //processRegistersInt64(responseBuffer, 4, "Energy Imported L1 two", meterPrefix + "active_energy_imported_L1");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
-/*
   //Read Active Energy Imported L2
-  if (readHoldingRegisters64(meterNumber, 2504, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, dataTypeInt64, "Energy Imported L2", meterPrefix + "active_energy_imported_L2");
+  if (readHoldingRegisters(meterNumber, 2504, 4, responseBuffer)) {
+    processRegisters(responseBuffer, 4, dataTypeInt64, "Energy Imported L2", meterPrefix + "active_energy_imported_L2");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
   //Read Active Energy Imported L3
-  if (readHoldingRegisters64(meterNumber, 2508, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, dataTypeInt64, "Energy Imported L3", meterPrefix + "active_energy_imported_L3");
+  if (readHoldingRegisters(meterNumber, 2508, 4, responseBuffer)) {
+    processRegisters(responseBuffer, 4, dataTypeInt64, "Energy Imported L3", meterPrefix + "active_energy_imported_L3");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
   //Read Active Energy Imported Total
-  if (readHoldingRegisters64(meterNumber, 2512, 4, responseBuffer)) {
-    processRegistersInt64(responseBuffer, 4, dataTypeInt64, "Energy Imported Total", meterPrefix + "active_energy_imported_tot");
-     processRegistersInt64(responseBuffer, 4, dataTypeInt64, "Energy Imported Total", meterPrefix + "active_energy_imported_tot_summary");
+  if (readHoldingRegisters(meterNumber, 2512, 4, responseBuffer)) {
+    processRegisters(responseBuffer, 4, dataTypeInt64, "Energy Imported Total", meterPrefix + "active_energy_imported_tot");
+    processRegisters(responseBuffer, 4, dataTypeInt64, "Energy Imported Total", meterPrefix + "active_energy_imported_tot_summary");
   } else {
     Serial.println("Error reading Active Energy registers");
   }
-  */
+
 }
 
 void handleWebSocket() {
@@ -497,8 +499,8 @@ void handleWebSocket() {
   //Send the JSON document to the websocket.
   webSocket.broadcastTXT(JsonString);
 
-  //TODO Serial.println("Sent JSON to websocket");
-  //TODO Serial.println(JsonString);
+  Serial.println("Sent JSON to websocket");
+  Serial.println(JsonString);
 }
 
 void postToRemoteServer(int meterNumber = 1) { 

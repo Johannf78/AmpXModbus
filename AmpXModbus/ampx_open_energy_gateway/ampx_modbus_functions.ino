@@ -117,7 +117,8 @@ uint32_t combineRegistersToInt32(uint16_t reg0, uint16_t reg1) {
 }
 
 
-uint64_t combineAndSwap64(uint16_t reg0, uint16_t reg1, uint16_t reg2, uint16_t reg3) {
+//Old combineAndSwap64
+uint64_t combineRegistersToInt64(uint16_t reg0, uint16_t reg1, uint16_t reg2, uint16_t reg3) {
   uint64_t combined = 0;
   // Combine in reverse order for little endian
   combined |= (uint64_t)reg3;
@@ -126,7 +127,7 @@ uint64_t combineAndSwap64(uint16_t reg0, uint16_t reg1, uint16_t reg2, uint16_t 
   combined |= (uint64_t)reg0 << 48;
   return combined;
 }
-
+/*
 bool readHoldingRegisters64(uint8_t slaveID, uint16_t startAddress, uint16_t numRegisters, uint16_t *responseBuffer) {
   uint8_t request[8];
   request[0] = slaveID;
@@ -165,3 +166,4 @@ bool readHoldingRegisters64(uint8_t slaveID, uint16_t startAddress, uint16_t num
   }
   return false;
 }
+*/

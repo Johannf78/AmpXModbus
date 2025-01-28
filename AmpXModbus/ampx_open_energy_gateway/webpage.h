@@ -133,7 +133,7 @@ String webpage = R"(
 
   <br/>
   <div id='meter3'>
-    <h3>Meter: 3, Serial number: m3_serial_number<span id='m1_name'><span></h3>
+    <h3>Meter: 3, Serial number: m3_serial_number<span id='m3_name'><span></h3>
     <table>
     <tr>
       <th>Entity</th>
@@ -176,7 +176,7 @@ String webpage = R"(
 
   <br/>
   <div id='meter4'>
-    <h3>Meter: 4, Serial number: m4_serial_number</h3>
+    <h3>Meter: 4, Serial number: m4_serial_number<span id='m4_name'><span></h3>
     <table>
     <tr>
       <th>Entity</th>
@@ -278,9 +278,9 @@ String webpage = R"(
       else if (key.includes('name'))
           value = ', Name: ' + value;
            
-
+        //console.log("Key:", key, "Value:", value);
         document.getElementById(key).innerHTML = value;
-        console.log("Key:", key, "Value:", value);
+        
       }
     }
   }
