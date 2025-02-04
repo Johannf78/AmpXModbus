@@ -17,7 +17,6 @@ Select "node32s" under the boards.
 
 */
 
-
 #include <WiFi.h>
 #include <WebServer.h>
 #include <HTTPClient.h>
@@ -35,6 +34,16 @@ Select "node32s" under the boards.
 //The HTML code is stored in a seperate file, this makes the code easier to read.
 #include "webpage.h"
 #include "web_settings.h"
+
+
+#define DEBUG 0
+#if DEBUG == 1
+  #define debug(x) Serial.print(x)
+  #define debugln(x) Serial.println(x)
+#else
+  #define debug(x)
+  #define debugln(x)
+#endif
 
 //The JSonDocument is used to send data to the websocket.
 JsonDocument JsonDoc;
