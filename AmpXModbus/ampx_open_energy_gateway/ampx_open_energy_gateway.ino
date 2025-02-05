@@ -226,6 +226,8 @@ void handleSettings()
   String page = webpage_settings;
   //Use javascript to hide settings for meters not present.
   page.replace("numberOfMetersValue", String(numberOfMeters));
+  page.replace("m_connected_meters_num", String(numberOfMeters));
+  page.replace("m_gateway_id", String(APMP_GATEWAY_ID));
 
   String m1_name = preferences.getString("m1_name");
   Serial.println("m1_name_value: " + m1_name);
@@ -240,6 +242,15 @@ void handleSettings()
   page.replace("m2_serial_number", m2_serial_number);
   page.replace("m3_serial_number", m3_serial_number);
   page.replace("m4_serial_number", m4_serial_number);
+
+  int rssi = WiFi.RSSI();
+  // -100 - -30dbm to 0 - 100%
+  int percentage = (int)((float)(rssi + 100) * 1.4286);
+  if (percentage < 0)
+    percentage = 0;
+  else if (percentage > 100)
+    percentage = 100;
+  JsonDoc["m_wifi_rssi"] = String(rssi) + "dBm (" + String(percentage) + "%)";
 
   server.send(200, "text/html", page);
 }
@@ -310,10 +321,10 @@ void processRegisters(uint16_t* responseBuffer, uint16_t numRegisters, int regis
   //Update the json document with the value
   JsonDoc[docLabel] = stringValue;
 
-  Serial.print("docLabel: " + docLabel + ", ");
-  Serial.print(friendlyLabel);
-  Serial.print(": ");
-  Serial.println(stringValue);
+  //Serial.print("docLabel: " + docLabel + ", ");
+  //Serial.print(friendlyLabel);
+  //Serial.print(": ");
+  //Serial.println(stringValue);
   
 }
 
@@ -468,8 +479,8 @@ void handleWebSocket() {
   //Send the JSON document to the websocket.
   webSocket.broadcastTXT(JsonString);
 
-  Serial.println("Sent JSON to websocket");
-  Serial.println(JsonString);
+  //Serial.println("Sent JSON to websocket");
+  //Serial.println(JsonString);
 }
 
 void postToRemoteServer(int meterNumber = 1) { 

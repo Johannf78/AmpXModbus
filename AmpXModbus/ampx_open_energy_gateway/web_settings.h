@@ -19,8 +19,13 @@ String webpage_settings = R"(
 <body>
 <main>
   <h1>AmpX Open Energy Gateway - Settings</h1>
-  
   <br>
+  <h2>Information/Status</h2>
+  <ul>
+    <li>Gateway ID: m_gateway_id</li>
+    <li id='m_wifi_rssi'>Wi-Fi Strength: </li>
+    <li>Connected Meters: m_connected_meters_num</li>
+  </ul>
   <h2>Set Meter Names</h2>
   <p>To idetify meters, set a name for each meter.</p>
   
@@ -73,7 +78,6 @@ String webpage_settings = R"(
     var numberOfMeters = numberOfMetersValue; // Define the number of meters as an integer
     //document.getElementById(key).value = value;
 
-
     // Hide the div with id 'meter2', 'meter3', and 'meter4' based on the numberOfMeters
     if (numberOfMeters == 1) {
         document.getElementById('meter2').style.display = 'none';
@@ -85,26 +89,17 @@ String webpage_settings = R"(
     } else if (numberOfMeters == 3) {
         document.getElementById('meter4').style.display = 'none';
     }
-    /*
+ 
     socket = new WebSocket('ws://' + window.location.hostname + ':81/');
     socket.onmessage = function(event) {
       processCommand(event);
     };
-    */
   }
   function processCommand(event){
     var data = JSON.parse(event.data);
-    
     if (data) {
-      for (let key in data) {
-        let value = data[key];
-        
-        try {
-          document.getElementById(key).value = value;
-          console.log("Key:", key, "Value:", value);
-        } catch {
-        }
-      }
+      key = 'm_wifi_rssi';
+      document.getElementById(key).textContent = "Wi-Fi Strength: " + data[key];
     }
   }
   window.onload = function(event){
