@@ -35,6 +35,9 @@ Select "node32s" under the boards.
 #include "webpage.h"
 #include "web_settings.h"
 
+//Unique Gateway ID for each gateway manufactured. To be used when adding it to a the portal under a specific user.
+//Format: 2025 0204 0001 Year, Month day, increment.
+#define APMP_GATEWAY_ID 202502040001
 
 #define DEBUG 0
 #if DEBUG == 1
@@ -303,15 +306,6 @@ void processRegisters(uint16_t* responseBuffer, uint16_t numRegisters, int regis
     floatValue = combineRegistersToFloat(responseBuffer[0], responseBuffer[1]);
     stringValue = String(floatValue,2); //convert float to string with two decimal places
   }
-/*
-  //uint32_t combinedValue = combineAndSwap(results[0], results[1]);
-
-  //float value = convertToFloat(combinedValue);
-
-  //int value = combineRegistersToInt32(results[0], results[1]);
-
-  //String value = "Test";
-  */
 
   //Update the json document with the value
   JsonDoc[docLabel] = stringValue;
@@ -322,40 +316,6 @@ void processRegisters(uint16_t* responseBuffer, uint16_t numRegisters, int regis
   Serial.println(stringValue);
   
 }
-
-//TODO: Delete this function
-/*
-void processRegistersInt64(uint16_t* responseBuffer, uint16_t numRegisters,
-                           const String& friendlyLabel, const String& docLabel) {
-  // Print registers in hex
-  
-    Serial.print("Registers (hex): ");
-    for(int i = 0; i < numRegisters; i++) {
-        Serial.print("0x");
-        Serial.print(responseBuffer[i], HEX);
-        Serial.print(" ");
-    }
-    Serial.println();
-  
-
-  uint64_t value = combineAndSwap64(responseBuffer[0], responseBuffer[1],
-                                    responseBuffer[2], responseBuffer[3]);
-
-  Serial.print("Energy: ");
-  Serial.println(value);
-  Serial.print("Energy (hex): 0x");
-  Serial.println((unsigned long)energy, HEX);
-  
-  //Update the json document with the value
-  JsonDoc[docLabel] = String((float)value / 1000, 2);
-
-  Serial.println("Energy from processRegistersInt64");
-  Serial.print(friendlyLabel);
-  Serial.print(": ");
-  Serial.println(value);
-}
-*/
-
 
 void handlePowerMeter(int meterNumber = 1) {
   //These variable are populated from the data read on Modbus, they are reused for different parameters, voltage, current, power, etc.
