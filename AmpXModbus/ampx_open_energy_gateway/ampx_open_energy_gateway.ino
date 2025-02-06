@@ -37,7 +37,7 @@ Select "node32s" under the boards.
 
 //Unique Gateway ID for each gateway manufactured. To be used when adding it to a the portal under a specific user.
 //Format: 2025 0204 0001 Year, Month day, increment.
-#define APMP_GATEWAY_ID 202502040001
+#define AMPX_GATEWAY_ID 202502040001
 
 #define DEBUG 0
 #if DEBUG == 1
@@ -227,7 +227,7 @@ void handleSettings()
   //Use javascript to hide settings for meters not present.
   page.replace("numberOfMetersValue", String(numberOfMeters));
   page.replace("m_connected_meters_num", String(numberOfMeters));
-  page.replace("m_gateway_id", String(APMP_GATEWAY_ID));
+  page.replace("m_gateway_id", String(AMPX_GATEWAY_ID));
 
   String m1_name = preferences.getString("m1_name");
   Serial.println("m1_name_value: " + m1_name);
