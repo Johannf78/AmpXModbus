@@ -34,6 +34,7 @@ Select "node32s" under the boards.
 //The HTML code is stored in a seperate file, this makes the code easier to read.
 #include "webpage.h"
 #include "web_settings.h"
+#include "meter_registers.h"
 
 //Include AmpX custom written library for Modbus over TCP/IP
 //Saved in the libraries\Documdnents\Arduio\libraries\ampx_modbus_tcpip
@@ -58,7 +59,7 @@ Select "node32s" under the boards.
 #define MODBUS_TYPE_RS485 1
 #define MODBUS_TYPE_TCPIP 2
 //Set the required variant here:
-#define MODBUS_TYPE MODBUS_TYPE_TCPIP
+#define MODBUS_TYPE MODBUS_TYPE_RS485
 
 
 //1.Define the RS485 control pins
@@ -83,6 +84,9 @@ IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
 
 //The JSonDocument is used to send data to the websocket.
 JsonDocument JsonDoc;
+//JSON document for meter register definitions
+JsonDocument MeterRegisterDefs;
+
 
 
 //Define the Status indicating LEDs pins
@@ -93,9 +97,10 @@ JsonDocument JsonDoc;
 
 
 //Constant data types, used in the processRegisters function.
-const int dataTypeInt32 = 1;
-const int dataTypeInt64 = 2;
-const int dataTypeFloat = 3;
+//These are now defined in meter_registers.h
+//const int dataTypeInt32 = 1;
+//const int dataTypeInt64 = 2;
+//const int dataTypeFloat = 3;
 
 
 const char* firmwareURL = "https://ampx.co/downloads/ampx_open_energy_gateway.ino.bin";
@@ -131,6 +136,7 @@ Preferences preferences;
 void handlePowerMeterRS485(int meterNumber);
 void handlePowerMeterTCPIP(int meterNumber);
 void postToAmpXPortal(int meterNumber);
+void setupMeterRegisters();
 
 void setup() {
   Serial.begin(9600); // Debug serial
@@ -165,6 +171,9 @@ void setup() {
   Serial.print("AMPX_GATEWAY_ID: ");
   Serial.println(AMPX_GATEWAY_ID);
   Serial.println("Setup complete. Starting communication...");
+  
+  // Initialize meter register definitions
+  setupMeterRegisters();
 
   // Initialize WiFi
   initWiFi(); //Program will not continue unless WiFi is connected..

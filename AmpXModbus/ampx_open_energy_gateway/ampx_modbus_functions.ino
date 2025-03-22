@@ -52,7 +52,7 @@ bool receiveResponse(uint8_t *response, uint8_t len) {
   return false;
 }
 
-bool readHoldingRegisters(uint8_t slaveID, uint16_t startAddress, uint16_t numRegisters, uint16_t *responseBuffer) {
+bool modbus_read_registers_rs485(uint8_t slaveID, uint16_t startAddress, uint16_t numRegisters, uint16_t *responseBuffer) {
   uint8_t request[8];
   request[0] = slaveID;
   request[1] = 0x03;  // Function code for reading holding registers
@@ -127,43 +127,3 @@ uint64_t combineRegistersToInt64(uint16_t reg0, uint16_t reg1, uint16_t reg2, ui
   combined |= (uint64_t)reg0 << 48;
   return combined;
 }
-/*
-bool readHoldingRegisters64(uint8_t slaveID, uint16_t startAddress, uint16_t numRegisters, uint16_t *responseBuffer) {
-  uint8_t request[8];
-  request[0] = slaveID;
-  request[1] = 0x03;
-  request[2] = highByte(startAddress);
-  request[3] = lowByte(startAddress);
-  request[4] = highByte(numRegisters);
-  request[5] = lowByte(numRegisters);
-  uint16_t crc = calculateCRC(request, 6);
-  request[6] = lowByte(crc);
-  request[7] = highByte(crc);
-
-  preTransmission();
-  Serial2.write(request, 8);
-  Serial2.flush();
-  postTransmission();
-
-  uint8_t response[5 + 2 * numRegisters];
-  uint32_t startTime = millis();
-  uint8_t index = 0;
-
-  while (millis() - startTime < 1000) {
-    if (Serial2.available()) {
-      response[index++] = Serial2.read();
-      if (index == sizeof(response)) {
-        uint16_t crc = calculateCRC(response, index - 2);
-        if (lowByte(crc) == response[index - 2] && highByte(crc) == response[index - 1]) {
-          for (uint8_t i = 0; i < numRegisters; i++) {
-            responseBuffer[i] = (response[3 + 2 * i] << 8) | response[4 + 2 * i];
-          }
-          return true;
-        }
-        break;
-      }
-    }
-  }
-  return false;
-}
-*/
