@@ -70,6 +70,18 @@ JsonDocument JsonDoc;
 //Modbus A, Positive, Green
 //Modbus B, Negative, Bue
 
+
+//Define Ethernet Pins, Mac and IPs
+#define ETH_SPI_SCS   5   // CS (Chip Select), Green
+// Network settings
+byte mac[] = {0x90, 0xA2, 0xDA, 0x0E, 0x94, 0xB5};
+IPAddress pc_ip(192, 168, 2, 120);   // PC IP
+IPAddress ip(192, 168, 2, 121);     // Arduino IP
+IPAddress gateway(192, 168, 2, 1);  // Network gateway
+IPAddress subnet(255, 255, 255, 0); // Subnet mask
+IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
+
+
 #define LED_1_POWER 12
 #define LED_2_METER 14
 #define LED_3_WIFI 27
@@ -101,8 +113,7 @@ String m3_serial_number = "";
 String m4_serial_number = "";  
 
 
-int numberOfMeters = 0;  // Number of meters connected, 
-                         //this will automatically be updated based on the number of meters detected
+int numberOfMeters = 0;  // Number of meters connected, this will automatically be updated based on the number of meters detected
 int maxNumberOfMeters = 4;
 
 WebServer server(HTTP);
@@ -110,6 +121,10 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 
 Preferences preferences;
 
+//Function prototypes, it needs to be here because it is used in the setup function.
+//one needs to add a forward declaration for this function as well, as it is define in functions.ino
+void handlePowerMeter(int meterNumber);
+void postToAmpXPortal(int meterNumber);
 
 void setup() {
   Serial.begin(9600); // Debug serial
@@ -126,7 +141,7 @@ void setup() {
   } else
   {
     // MODBUS_TYPE = MODBUS_TYPE_TCPIP
-    
+
   }
 
   // initialize LED status pins as outputs.
