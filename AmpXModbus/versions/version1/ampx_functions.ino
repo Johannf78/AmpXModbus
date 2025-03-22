@@ -97,70 +97,6 @@ void initServer() {
   webSocket.begin();
 }
 
-void initEthernet(){
-  Serial.println("Starting Ethernet connection...");
-
-  //Set the CS pin, required for ESP32 as the arduino default is different
-  Ethernet.init(ETH_SPI_SCS); 
-
-  
-  Serial.println("\nStarting Custom Modbus TCP Implementation");
-  
-  // Initialize ethernet
-  Serial.println("Initializing Ethernet...");
-  Ethernet.begin(mac, ip, gateway, subnet);
-  
-  // Wait for Ethernet to be ready
-  delay(2000);
-
-  //Hardware check
-  Serial.println("Checking Ethernet hardware...");
-  if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-    Serial.println("ERROR: No Ethernet hardware detected!");
-    return;
-  }
-  else {
-    Serial.println("Ethernet hardware detected!");
-  }
-  
-  //Check if cable is connected
-  if (Ethernet.linkStatus() == LinkOFF) {
-    Serial.println("Link is OFF. Check cable connection.");
-  }
-  else {
-    Serial.println("Link is ON. Cable is connected. Ready to go!");
-    Serial.print("To test connection, please ping: ");
-    Serial.println(ip);
-  }
-
-  Serial.print("Arduino IP: ");
-  Serial.println(Ethernet.localIP());
-  Serial.print("Energy Meter IP: ");
-  Serial.println(meter_ip);
-  Serial.print("Port: ");
-  Serial.println(MODBUS_PORT);
-
-  
-  // Initialize Modbus with meter IP
-  modbus_init(meter_ip);
-  
-  // Test network connectivity
-  Serial.println("\nTesting network connectivity...");
-  if (modbus_test_connection()) {
-    Serial.println("Connection test successful!");
-  } else {
-    Serial.println("Connection test failed!");
-    Serial.println("Please check:");
-    Serial.println("1. Physical network connection");
-    Serial.println("2. IP addresses and subnet mask");
-    Serial.println("3. No firewall blocking port 502");
-    Serial.println("4. Energy meter is powered on and responding");
-  }
-  
-  Serial.println("Modbus TCPIP Setup complete");
-  Serial.println("");
-}
-
 void handleChangeMetersName() {
   String m1_name = server.arg("m1_name");
   preferences.putString("m1_name", m1_name);
@@ -285,9 +221,7 @@ void processRegisters(uint16_t* responseBuffer, uint16_t numRegisters, int regis
   
 }
 
-
-
-void handlePowerMeterRS485(int meterNumber = 1) {
+void handlePowerMeter(int meterNumber = 1) {
   //This variable is populated from the data read on Modbus, it is reused for different parameters, voltage, current, power, etc.
   uint16_t responseBuffer[4];
   //Serial.println("");
@@ -429,45 +363,6 @@ void handlePowerMeterRS485(int meterNumber = 1) {
 
 }
 
-void handlePowerMeterTCPIP(int meterNumber = 1) {
-  readSerialNumberTCPIP();
-}
-
-void readSerialNumberTCPIP() {
-  Serial.println("\n--- Reading Serial Number (Register 70) ---");
-
-  unsigned long serial_num = 0;
-  
-  uint16_t registerData[2];  // Array to hold register values
-  
-  if (modbus_read_registers(70, 2, registerData)) {
-    // Print raw values
-    Serial.print("Register 70: 0x");
-    Serial.print(registerData[0], HEX);
-    Serial.print(", Register 71: 0x");
-    Serial.println(registerData[1], HEX);
-    
-    // Combine registers in both endian formats
-    unsigned long serial_big = combine_registers_integer(registerData[0], registerData[1], BIG_ENDIAN_FORMAT);
-    unsigned long serial_little = combine_registers_integer(registerData[0], registerData[1], LITTLE_ENDIAN_FORMAT);
-    
-    Serial.print("Serial Number (big-endian): ");
-    Serial.println(serial_big);
-    Serial.print("Serial Number (little-endian): ");
-    Serial.println(serial_little);
-    
-    // Store the serial number (big-endian format)
-    serial_num = serial_big;
-    
-    if (serial_big == 3523875004UL) {
-      Serial.println("✓ MATCH! Serial number verified.");
-    }
-  } else {
-    Serial.println("Failed to read serial number");
-  }
-}
-
-
 void handleWebSocket() {
   String JsonString;
 
@@ -597,27 +492,20 @@ void postToAmpXPortal(int meterNumber = 1) { //old postToRemoteServer
 
 
 void detectNumberOfMeters(){
-  if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
-    uint16_t responseBuffer[4];
-    //Find number of meters, 4 max number for now.
-    for (int i = 1; i <= maxNumberOfMeters; i++) {
-      // Read Serial number registers 70 and 71
-      if (readHoldingRegisters(i, 70, 2, responseBuffer)) {  // i is the Modbus slave ID
-        uint32_t combinedValue = combineRegistersToInt32(responseBuffer[0], responseBuffer[1]);
-        //Serial.print("Serial Number: ");
-        //Serial.println(combinedValue);
-        //Update the number of meters if able to read its serial number
-        numberOfMeters = i;    
-      } else {
-      Serial.println("Error reading meter: " + String(i));
-      }
-    } 
-    } else
-  {
-    // MODBUS_TYPE = MODBUS_TYPE_TCPIP
-    // TCPIP is only used for handheld meters, there will always just be one.
-    numberOfMeters = 1;
-  }
+  uint16_t responseBuffer[4];
+  //Find number of meters, 4 max number for now.
+  for (int i = 1; i <= maxNumberOfMeters; i++) {
+    // Read Serial number registers 70 and 71
+    if (readHoldingRegisters(i, 70, 2, responseBuffer)) {  // i is the Modbus slave ID
+      uint32_t combinedValue = combineRegistersToInt32(responseBuffer[0], responseBuffer[1]);
+      //Serial.print("Serial Number: ");
+      //Serial.println(combinedValue);
+      //Update the number of meters if able to read its serial number
+      numberOfMeters = i;    
+    } else {
+     Serial.println("Error reading meter: " + String(i));
+    }
+  } 
   Serial.println("Number of meters detected: " + String(numberOfMeters)); 
   if (numberOfMeters >= 1){
     //Indicate that one or more meters were detected by turning on a LED.

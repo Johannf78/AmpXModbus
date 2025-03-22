@@ -53,24 +53,25 @@ Select "node32s" under the boards.
   #define debugln(x)
 #endif
 
-//There will be two variants of this gateway, one working with Modbus over RS485 and the other
-//working with mobus over TCP/IP, this is setup here and used depeding on what is needed.
 #define MODBUS_TYPE_RS485 1
 #define MODBUS_TYPE_TCPIP 2
-//Set the required variant here:
+
 #define MODBUS_TYPE MODBUS_TYPE_TCPIP
 
+//The JSonDocument is used to send data to the websocket.
+JsonDocument JsonDoc;
 
-//1.Define the RS485 control pins
+// Define the RS485 control pins
 #define MAX485_DE 4 //White
 #define MAX485_RE_NEG 4
 #define RX_PIN 16   //RO Orange
 #define TX_PIN 17   //DI Yellow
+#define HTTP 80
 //Modbus A, Positive, Green
 //Modbus B, Negative, Bue
 
 
-//2. Define Ethernet Pins, Mac and IPs
+//Define Ethernet Pins, Mac and IPs
 #define ETH_SPI_SCS   5   // CS (Chip Select), Green
 // Network settings
 byte mac[] = {0x90, 0xA2, 0xDA, 0x0E, 0x94, 0xB5};
@@ -81,11 +82,6 @@ IPAddress subnet(255, 255, 255, 0); // Subnet mask
 IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
 
 
-//The JSonDocument is used to send data to the websocket.
-JsonDocument JsonDoc;
-
-
-//Define the Status indicating LEDs pins
 #define LED_1_POWER 12
 #define LED_2_METER 14
 #define LED_3_WIFI 27
@@ -120,7 +116,6 @@ String m4_serial_number = "";
 int numberOfMeters = 0;  // Number of meters connected, this will automatically be updated based on the number of meters detected
 int maxNumberOfMeters = 4;
 
-#define HTTP 80
 WebServer server(HTTP);
 WebSocketsServer webSocket = WebSocketsServer(81);
 
@@ -128,15 +123,11 @@ Preferences preferences;
 
 //Function prototypes, it needs to be here because it is used in the setup function.
 //one needs to add a forward declaration for this function as well, as it is define in functions.ino
-void handlePowerMeterRS485(int meterNumber);
-void handlePowerMeterTCPIP(int meterNumber);
+void handlePowerMeter(int meterNumber);
 void postToAmpXPortal(int meterNumber);
 
 void setup() {
   Serial.begin(9600); // Debug serial
-    while (!Serial) {
-    ; // Wait for serial port to connect
-  }
 
   if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
     Serial2.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);  // Modbus serial, 
@@ -147,12 +138,14 @@ void setup() {
     pinMode(MAX485_RE_NEG, OUTPUT);
     digitalWrite(MAX485_DE, LOW); //Disables the RS485 driver.
     digitalWrite(MAX485_RE_NEG, LOW); // Enables the RS485 receiver.
-  } else {
+  } else
+  {
     // MODBUS_TYPE = MODBUS_TYPE_TCPIP
-    initEthernet();
+
   }
 
   // initialize LED status pins as outputs.
+
   pinMode(LED_1_POWER, OUTPUT);
   pinMode(LED_2_METER, OUTPUT);
   pinMode(LED_3_WIFI, OUTPUT);
@@ -170,7 +163,7 @@ void setup() {
   initWiFi(); //Program will not continue unless WiFi is connected..
 
   // Initialize NVS (Local Permanent Storage)
-  initNvs();
+  initNvs();  
 
   //Initialise the local web server.
   initServer();
@@ -180,11 +173,7 @@ void setup() {
 
   //Do the initial reading of the meters and update of the webpage, then repeat after 3 seconds in the loop.
   for (int i = 1; i <= numberOfMeters; i++) {
-    if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
-      handlePowerMeterRS485(i); //Pass the meter number to the function. Updtate the values on the local web page.
-    } else { // MODBUS_TYPE = MODBUS_TYPE_TCPIP
-      handlePowerMeterTCPIP(i); //Pass the meter number to the function. Updtate the values on the local web page.
-    }
+    handlePowerMeter(i); //Pass the meter number to the function. Updtate the values on the local web page.
     postToAmpXPortal(i); //Also post to the remote server as soon as the device starts up.
   }
   handleWebSocket();
@@ -202,11 +191,7 @@ void loop() {
   // Read the parameters every 3 seconds
   if (now - counter1 > 3000) {
     for (int i = 1; i <= numberOfMeters; i++) {
-      if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
-        handlePowerMeterRS485(i); //Pass the meter number to the function. Updtate the values on the local web page.
-      } else { // MODBUS_TYPE = MODBUS_TYPE_TCPIP
-        handlePowerMeterTCPIP(i); //Pass the meter number to the function. Updtate the values on the local web page.
-      }
+      handlePowerMeter(i); //Pass the meter number to the function.
     }
     handleWebSocket();
     counter1 = now;
