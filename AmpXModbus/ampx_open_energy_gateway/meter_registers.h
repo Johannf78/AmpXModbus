@@ -9,7 +9,8 @@ const int dataTypeInt64 = 2;
 const int dataTypeFloat = 3;
 
 // Global JSON document to store meter register definitions
-extern JsonDocument MeterRegisterDefs;
+extern StaticJsonDocument<128> MeterRegisterDefs;
+
 
 // This function sets up the meter register definitions in a JSON document
 void setupMeterRegisters() {
