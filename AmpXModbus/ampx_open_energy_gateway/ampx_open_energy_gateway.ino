@@ -34,18 +34,19 @@ Select "node32s" under the boards.
 //The HTML code is stored in a seperate file, this makes the code easier to read.
 #include "webpage.h"
 #include "web_settings.h"
+//Define the meter registers and datatypes here
 #include "meter_registers.h"
 
-//Include AmpX custom written library for Modbus over TCP/IP
-//Saved in the libraries\Documdnents\Arduio\libraries\ampx_modbus_tcpip
-//Exact path: D:\OneDrive\JF Data\UserData\Documents\Arduino\libraries\ampx_modbus_tcpip
+//Include AmpX custom written libraries for Modbus
+//Saved in the D:\OneDrive\JF Data\UserData\Documents\Arduino\libraries folder
 #include <ampx_modbus_tcpip.h>
+#include <ampx_modbus_rs485.h>
 
 //Unique Gateway ID for each gateway manufactured. To be used when adding it to a the portal under a specific user.
 //Format: 25 02 0001 Year, Month, increment.
 #define AMPX_GATEWAY_ID 202503040001
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG == 1
   #define debug(x) Serial.print(x)
   #define debugln(x) Serial.println(x)
@@ -145,14 +146,9 @@ void setup() {
   }
 
   if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
-    Serial2.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);  // Modbus serial, 
-    //SERIAL_8N1: configuration for serial communication. 8: 8 data bits, N: No parity bit, 1: 1 stop bit
-    delay(500);  //Just to give the serial ports some time to initialise.
-
-    pinMode(MAX485_DE, OUTPUT);
-    pinMode(MAX485_RE_NEG, OUTPUT);
-    digitalWrite(MAX485_DE, LOW); //Disables the RS485 driver.
-    digitalWrite(MAX485_RE_NEG, LOW); // Enables the RS485 receiver.
+    // Initialize RS485 with Serial2
+    rs485_init(&Serial2, RX_PIN, TX_PIN);
+    Serial.println("RS485 Modbus initialized");
   } else {
     // MODBUS_TYPE = MODBUS_TYPE_TCPIP
     initEthernet();
@@ -179,7 +175,7 @@ void setup() {
   initWiFi(); //Program will not continue unless WiFi is connected..
 
   // Initialize NVS (Local Permanent Storage)
-  initNvs();
+  initNvs();  
 
   //Initialise the local web server.
   initServer();
