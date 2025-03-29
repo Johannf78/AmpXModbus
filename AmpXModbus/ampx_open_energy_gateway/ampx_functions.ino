@@ -1,8 +1,8 @@
 void initNvs() {
   if (preferences.begin("app", false)) {
-    Serial.println("NVS initialized successfully!");
+    debugln("NVS initialized successfully!");
   } else {
-    Serial.println("Failed to initialize NVS.");
+    debugln("Failed to initialize NVS.");
   }
 }
 
@@ -13,10 +13,10 @@ void initWiFi() {
   // Connect to the Wi-Fi network
   /*WiFi.begin(ssid, password);
 
-  Serial.print("Now connecting to WiFi...");
+  debug("Now connecting to WiFi...");
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    Serial.print(".");//Print more dots while connecting 
+    debug(".");//Print more dots while connecting 
   }*/
 
   WiFiManager wifiManager;
@@ -31,21 +31,21 @@ void initWiFi() {
   //here  "AutoConnectAP"
   //and goes into a blocking loop awaiting configuration
   if (!wifiManager.autoConnect("AmpX-Energy-Gateway-AP", "")) {
-    Serial.println("failed to connect and hit timeout");
+    debugln("failed to connect and hit timeout");
     //reset and try again, or maybe put it to deep sleep
     ESP.restart();
     delay(1000);
   }
   //Indicate that Wifi is successfully connected by putting on LED 3
   digitalWrite(LED_3_WIFI, HIGH);
-  Serial.println("");
-  Serial.println("Connected to Wi-Fi");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-  Serial.print("Signal strength: ");
-  Serial.println(WiFi.RSSI());
-  Serial.print("WiFi.getHostname: ");
-  Serial.println(WiFi.getHostname());
+  debugln("");
+  debugln("Connected to Wi-Fi");
+  debug("IP address: ");
+  debugln(WiFi.localIP());
+  debug("Signal strength: ");
+  debugln(WiFi.RSSI());
+  debug("WiFi.getHostname: ");
+  debugln(WiFi.getHostname());
 
   // OTA setup
   ArduinoOTA.onStart([]() {
@@ -56,34 +56,38 @@ void initWiFi() {
       type = "filesystem";
     }
     
-    Serial.println("Start updating " + type);
+    debugln("Start updating " + type);
   });
 
   ArduinoOTA.onEnd([]() {
-    Serial.println("\nEnd");
+    debugln("\nEnd");
   });
 
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("Progress: %u%%\r", (progress * 100) / total);
+    #if DEBUG == 1
+      Serial.printf("Progress: %u%%\r", (progress * 100) / total);
+    #endif
   });
 
   ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
+    #if DEBUG == 1
+      Serial.printf("Error[%u]: ", error);
+    #endif
     if (error == OTA_AUTH_ERROR) {
-      Serial.println("Auth Failed");
+      debugln("Auth Failed");
     } else if (error == OTA_BEGIN_ERROR) {
-      Serial.println("Begin Failed");
+      debugln("Begin Failed");
     } else if (error == OTA_CONNECT_ERROR) {
-      Serial.println("Connect Failed");
+      debugln("Connect Failed");
     } else if (error == OTA_RECEIVE_ERROR) {
-      Serial.println("Receive Failed");
+      debugln("Receive Failed");
     } else if (error == OTA_END_ERROR) {
-      Serial.println("End Failed");
+      debugln("End Failed");
     }
   });
 
   ArduinoOTA.begin();
-  Serial.println("Ready for OTA updates.");
+  debugln("Ready for OTA updates.");
 }
 
 void initServer() {
@@ -97,85 +101,85 @@ void initServer() {
 }
 
 void initEthernet(){
-  Serial.println("Starting Ethernet connection...");
+  debugln("Starting Ethernet connection...");
 
   //Set the CS pin, required for ESP32 as the arduino default is different
   Ethernet.init(ETH_SPI_SCS); 
 
   
-  Serial.println("\nStarting Custom Modbus TCP Implementation");
+  debugln("\nStarting Custom Modbus TCP Implementation");
   
   // Initialize ethernet
-  Serial.println("Initializing Ethernet...");
+  debugln("Initializing Ethernet...");
   Ethernet.begin(mac, ip, gateway, subnet);
   
   // Wait for Ethernet to be ready
   delay(2000);
 
   //Hardware check
-  Serial.println("Checking Ethernet hardware...");
+  debugln("Checking Ethernet hardware...");
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-    Serial.println("ERROR: No Ethernet hardware detected!");
+    debugln("ERROR: No Ethernet hardware detected!");
     return;
   }
   else {
-    Serial.println("Ethernet hardware detected!");
+    debugln("Ethernet hardware detected!");
   }
   
   //Check if cable is connected
   if (Ethernet.linkStatus() == LinkOFF) {
-    Serial.println("Link is OFF. Check cable connection.");
+    debugln("Link is OFF. Check cable connection.");
   }
   else {
-    Serial.println("Link is ON. Cable is connected. Ready to go!");
-    Serial.print("To test connection, please ping: ");
-    Serial.println(ip);
+    debugln("Link is ON. Cable is connected. Ready to go!");
+    debug("To test connection, please ping: ");
+    debugln(ip);
   }
 
-  Serial.print("Arduino IP: ");
-  Serial.println(Ethernet.localIP());
-  Serial.print("Energy Meter IP: ");
-  Serial.println(meter_ip);
-  Serial.print("Port: ");
-  Serial.println(MODBUS_PORT);
+  debug("Arduino IP: ");
+  debugln(Ethernet.localIP());
+  debug("Energy Meter IP: ");
+  debugln(meter_ip);
+  debug("Port: ");
+  debugln(MODBUS_PORT);
 
   
   // Initialize Modbus with meter IP
   modbus_init(meter_ip);
   
   // Test network connectivity
-  Serial.println("\nTesting network connectivity...");
+  debugln("\nTesting network connectivity...");
   if (modbus_test_connection()) {
-    Serial.println("Connection test successful!");
+    debugln("Connection test successful!");
   } else {
-    Serial.println("Connection test failed!");
-    Serial.println("Please check:");
-    Serial.println("1. Physical network connection");
-    Serial.println("2. IP addresses and subnet mask");
-    Serial.println("3. No firewall blocking port 502");
-    Serial.println("4. Energy meter is powered on and responding");
+    debugln("Connection test failed!");
+    debugln("Please check:");
+    debugln("1. Physical network connection");
+    debugln("2. IP addresses and subnet mask");
+    debugln("3. No firewall blocking port 502");
+    debugln("4. Energy meter is powered on and responding");
   }
   
-  Serial.println("Modbus TCPIP Setup complete");
-  Serial.println("");
+  debugln("Modbus TCPIP Setup complete");
+  debugln("");
 }
 
 void handleChangeMetersName() {
   String m1_name = server.arg("m1_name");
   preferences.putString("m1_name", m1_name);
-  Serial.println("m1_name: " + m1_name);
+  debugln("m1_name: " + m1_name);
 
   String m2_name = server.arg("m2_name");
   preferences.putString("m2_name", m2_name);
-  Serial.println("m2_name: " + m2_name);
+  debugln("m2_name: " + m2_name);
 
   String m3_name = server.arg("m3_name");
   preferences.putString("m3_name", m3_name);
-  Serial.println("m3_name: " + m3_name);
+  debugln("m3_name: " + m3_name);
 
   String m4_name = server.arg("m4_name");
   preferences.putString("m4_name", m4_name);
-  Serial.println("m4_name: " + m4_name);
+  debugln("m4_name: " + m4_name);
 
 
   server.send(200, "text/html", "Updated successfully. <br>Back to:<a href='/'>Home</a> | <a href='/settings'>Settings</a>");
@@ -183,25 +187,27 @@ void handleChangeMetersName() {
 
 void handleSettings()
 {
-  String page = webpage_settings;
+  // Load a fresh copy of the settings page from PROGMEM
+  webpage_settings.load();
+  
   //Use javascript to hide settings for meters not present.
-  page.replace("numberOfMetersValue", String(numberOfMeters));
-  page.replace("m_connected_meters_num", String(numberOfMeters));
-  page.replace("m_gateway_id", String(AMPX_GATEWAY_ID));
+  webpage_settings.replace("numberOfMetersValue", String(numberOfMeters));
+  webpage_settings.replace("m_connected_meters_num", String(numberOfMeters));
+  webpage_settings.replace("m_gateway_id", String(AMPX_GATEWAY_ID));
 
   String m1_name = preferences.getString("m1_name");
-  Serial.println("m1_name_value: " + m1_name);
-  page.replace("m1_name_value", m1_name);
+  debugln("m1_name_value: " + m1_name);
+  webpage_settings.replace("m1_name_value", m1_name);
 
   String m2_name = preferences.getString("m2_name");
-  Serial.println("m2_name_value: " + m2_name);
-  page.replace("m2_name_value", m2_name);
+  debugln("m2_name_value: " + m2_name);
+  webpage_settings.replace("m2_name_value", m2_name);
 
-    //Replace the string m1_serial_number with the actual serial number, done here as it does not update regularly like values.
-  page.replace("m1_serial_number", m1_serial_number);
-  page.replace("m2_serial_number", m2_serial_number);
-  page.replace("m3_serial_number", m3_serial_number);
-  page.replace("m4_serial_number", m4_serial_number);
+  //Replace the string m1_serial_number with the actual serial number, done here as it does not update regularly like values.
+  webpage_settings.replace("m1_serial_number", m1_serial_number);
+  webpage_settings.replace("m2_serial_number", m2_serial_number);
+  webpage_settings.replace("m3_serial_number", m3_serial_number);
+  webpage_settings.replace("m4_serial_number", m4_serial_number);
 
   int rssi = WiFi.RSSI();
   // -100 - -30dbm to 0 - 100%
@@ -212,16 +218,19 @@ void handleSettings()
     percentage = 100;
   JsonDoc["m_wifi_rssi"] = String(rssi) + "dBm (" + String(percentage) + "%)";
 
-  server.send(200, "text/html", page);
+  server.send(200, "text/html", webpage_settings.getContent());
 }
 
 void handleRoot() {
   //String html = "<h1>AmpX Open Energy Gateway</h1>";
   //String vol = "<h1>Voltage on L1: " + String(voltage_on_L1, 2) + "(V)</h1>";
   //html += vol;
-  //the String webpage has been defined in the included file webpage.h
+  //the webpage has been defined in the included file webpage.h
+  
+  // Load a fresh copy of the webpage from PROGMEM
+  webpage.load();
 
-  //Replace the string m1_serial_number with the actual serial number, done here as it does not update regularly like values.
+  // Replace placeholders with actual values
   webpage.replace("m1_serial_number", m1_serial_number);
   webpage.replace("m2_serial_number", m2_serial_number);
   webpage.replace("m3_serial_number", m3_serial_number);
@@ -240,50 +249,71 @@ void handleRoot() {
   JsonDoc["m3_name"] = preferences.getString("m3_name");
   JsonDoc["m4_name"] = preferences.getString("m4_name");
 
-  server.send(200, "text/html", webpage);
+  // Send the processed webpage to the client
+  server.send(200, "text/html", webpage.getContent());
 }
 
 void processRegisters(uint16_t* registerData, uint16_t numRegisters, int registerDataType,
                       const String& friendlyLabel, const String& docLabel) {
 
-  //Serial.println("");
-  //Serial.println(friendlyLabel);  
-  for (uint16_t i = 0; i < numRegisters; i++) {
-    //Serial.print("registerData " + String(i) + ": ");
-    //Serial.println(registerData[i]);
+  //debugln("");
+  //debugln(friendlyLabel);  
+  
+  for (int i = 0; i < numRegisters; i++) {
+    //debug("registerData " + String(i) + ": ");
+    //debugln(registerData[i]);
   }
   
-  float floatValue = 0;
-  uint32_t int32Value = 0;
-  uint64_t int64Value = 0;
   String stringValue = "";
-
-  if (registerDataType == dataTypeInt32){
-    //Serial.println("dataTypeInt32");
-    int32Value = combineRegistersToInt32(registerData[0], registerData[1]);
-    stringValue = String(int32Value); //convert integer 32 to string
-  }
-  if (registerDataType == dataTypeInt64){
-    //Serial.println("dataTypeInt64");
-    int64Value = combineRegistersToInt64(registerData[0], registerData[1], registerData[2], registerData[3]);
-    stringValue = String((float)int64Value / 1000, 2); //convert integer 64 to string
-  }
-  if (registerDataType == dataTypeFloat){
-    //Serial.println("dataTypeFloat");
-    floatValue = combineRegistersToFloat(registerData[0], registerData[1]);
-    stringValue = String(floatValue,2); //convert float to string with two decimal places
-  }
-
-  //Update the json document with the value
-  JsonDoc[docLabel] = stringValue;
-
-  //Serial.print("docLabel: " + docLabel + ", ");
-  //Serial.print(friendlyLabel);
-  //Serial.print(": ");
-  //Serial.println(stringValue);
   
+  // Process based on the data type
+  if (registerDataType == dataTypeInt32) {
+    //debugln("dataTypeInt32");
+    uint32_t combinedValue = combineRegistersToInt32(registerData[0], registerData[1]);
+    stringValue = String(combinedValue);
+  } else if (registerDataType == dataTypeInt64) {
+    //debugln("dataTypeInt64");
+    uint64_t combinedValue = combineRegistersToInt64(registerData[0], registerData[1], registerData[2], registerData[3]);
+    stringValue = String((unsigned long)combinedValue); //This is a kludge, as String() does not support uint64_t
+  } else if (registerDataType == dataTypeFloat) {
+    //debugln("dataTypeFloat");
+    float combinedValue = combineRegistersToFloat(registerData[0], registerData[1]);
+    stringValue = String(combinedValue, 2); // 2 decimal places
+  }
+  
+  // Write the value to the JsonDoc
+  if (stringValue != "") {
+    //debug("docLabel: " + docLabel + ", ");
+    //debug(friendlyLabel);
+    //debug(": ");
+    //debugln(stringValue);
+    JsonDoc[docLabel] = stringValue;
+  }
 }
 
+bool handleRs485Register(int meterNumber, int registerNumber, uint16_t numRegisters, const String& friendlyLabel, const String& meterFieldAlias, int registerDataType) {
+  uint16_t registerData[4]; // Buffer to hold register values (max 4 for our needs)
+  if (modbus_read_registers_rs485(meterNumber, registerNumber, numRegisters, registerData)) {
+    String docLabel = "m" + String(meterNumber) + "_" + meterFieldAlias;
+    processRegisters(registerData, numRegisters, registerDataType, friendlyLabel, docLabel);
+    return true;
+  } else {
+    debugln("Error reading register " + String(registerNumber));
+    return false;
+  }
+}
+
+bool handleTcpIpRegister(int registerNumber, uint16_t numRegisters, const String& friendlyLabel, const String& meterFieldAlias, int registerDataType, int meterNumber) {
+  uint16_t registerData[4]; // Buffer to hold register values (max 4 for our needs)
+  if (modbus_read_registers_tcpip(registerNumber, numRegisters, registerData)) {
+    String docLabel = "m" + String(meterNumber) + "_" + meterFieldAlias;
+    processRegisters(registerData, numRegisters, registerDataType, friendlyLabel, docLabel);
+    return true;
+  } else {
+    debugln("Error reading register " + String(registerNumber));
+    return false;
+  }
+}
 
 void handlePowerMeterRS485(int meterNumber = 1) {
   uint16_t registerData[4];
@@ -362,207 +392,195 @@ void handlePowerMeterTCPIP(int meterNumber = 1) {
 }
 
 void handleWebSocket() {
-  String JsonString;
-
-  serializeJson(JsonDoc, JsonString);
-  //Send the JSON document to the websocket.
-  webSocket.broadcastTXT(JsonString);
-
-  //Serial.println("Sent JSON to websocket");
-  //Serial.println(JsonString);
+  static unsigned long lastUpdate = 0;
+  unsigned long now = millis();
+  
+  // Update at most every 1 second
+  if (now - lastUpdate >= 1000) {
+    String JsonString;
+    serializeJson(JsonDoc, JsonString);
+    webSocket.broadcastTXT(JsonString);
+    //debugln("Sent JSON to websocket");
+    //debugln(JsonString);
+    lastUpdate = now;
+  }
 }
 
-void postToEmonCMS(int meterNumber = 1) { 
-  //old postToRemoteServer
-  String meterPrefix = "m" + String(meterNumber) + "_";
-
-/* for testing 
-  int test_power1 = random(1000);
-  int test_power2 = random(1000);
-  int test_power3 = random(1000);
-  int test_powert = random(1000);
-
-  String valuesString ="";
-  valuesString = "power1:" + String(test_power1);
-  valuesString += ",power2:" + String(test_power2);
-  valuesString += ",power3:" + String(test_power3);
-  valuesString += ",powert:" + String(test_powert);
-//  Serial.println("valuesString:  " + valuesString);
-*/
-
-  String valuesString2 ="";
-  valuesString2 = "power1:" + String(JsonDoc[meterPrefix + "active_power_L1"]);
-  valuesString2 += ",power2:" + String(JsonDoc[meterPrefix + "active_power_L2"]);
-  valuesString2 += ",power3:" + String(JsonDoc[meterPrefix + "active_power_L3"]);
-  valuesString2 += ",powert:" + String(JsonDoc[meterPrefix + "active_power_tot"]);
- // Serial.println("valuesString2:  " + valuesString2);
-
-  //Add energy imported values
-  valuesString2 += ",energy1:" + String(JsonDoc[meterPrefix + "active_energy_imported_L1"]);
-  valuesString2 += ",energy2:" + String(JsonDoc[meterPrefix + "active_energy_imported_L2"]);
-  valuesString2 += ",energy3:" + String(JsonDoc[meterPrefix + "active_energy_imported_L3"]);
-  valuesString2 += ",energyt:" + String(JsonDoc[meterPrefix + "active_energy_imported_tot"]);
-  Serial.println("valuesString2:  " + valuesString2);
-
-
-  if (WiFi.status() == WL_CONNECTED) {
+void postToEmonCMS(int meterNumber = 1) {
+  if ((WiFi.status() == WL_CONNECTED)) {
     HTTPClient http;
-    String url = "";
-    url = String(emoncms_server);
-    url += "/input/post?node=" + String(meterNumber) + "&json={";
-    //Test with fixed values
-    //url += "power1:100,power2:200,power3:300";
-    //Test with random values
-    //url += valuesString;
-    //Test with actual values
-    url += valuesString2;
-    url += "}&apikey=" + String(api_key);
-    //Serial.println(url);
 
+    String valuesString = "";
+    valuesString += "&json={";
     
-
+    //This is the list of values to extract from the JsonDoc
+    String valuesList[] = {"v_l1", "v_l2", "v_l3", "i_l1", "i_l2", "i_l3", "p_l1", "p_l2", "p_l3"};
+    
+    //  debugln("valuesString:  " + valuesString);
+    
+    String valuesString2;
+    for (int i = 0; i < sizeof(valuesList) / sizeof(valuesList[0]); i++) {
+      String key = "m" + String(meterNumber) + "_" + valuesList[i];
+      valuesString2 += valuesList[i] + ":" + JsonDoc[key].as<String>() + ",";
+    }
+    
+    // debugln("valuesString2:  " + valuesString2);
+    
+    // Remove the trailing comma and add the closing brace
+    valuesString2 = valuesString2.substring(0, valuesString2.length() - 1);
+    valuesString2 += "}";
+    
+    debugln("valuesString2:  " + valuesString2);
+    
+    String url = String(emoncms_server) + "/input/post?node=ampxgw_" + 
+                String(meterNumber) + 
+                "&apikey=" + String(api_key) + 
+                valuesString2;
+    
+    //debugln(url);
+    
     http.begin(url);
     int httpResponseCode = http.GET();
-    if (httpResponseCode > 0) {
-      String response = http.getString();
-      //Serial.println(httpResponseCode);
-      Serial.print("Https client Response: ");
-      Serial.println(response);
-    } else {
-      Serial.print("Error on sending POST: ");
-      Serial.println(httpResponseCode);
-      //Responce code -1 means no internet access, data ok?
+    
+    String response = http.getString();
+    //debugln(httpResponseCode);
+    debug("Https client Response: ");
+    debugln(response);
+    if (httpResponseCode <= 0) {
+      debug("Error on sending POST: ");
+      debugln(httpResponseCode);
     }
+    
     http.end();
   } else {
-    Serial.println("WiFi Disconnected");
+    debugln("WiFi Disconnected");
   }
 }
 
-
-void postToAmpXPortal(int meterNumber = 1) { //old postToRemoteServer
-  Serial.println("postToAmpXPortal function called");
-
-  String meterPrefix = "m" + String(meterNumber) + "_";
-
-    // Prepare JSON payload
-  String httpRequestData = "{\"gateway_id\":\"" + String(AMPX_GATEWAY_ID) + 
-                            "\",\"meter_id\":" + String(meterNumber) + 
-                            ",\"energy_usage\":" + String(JsonDoc[meterPrefix + "active_energy_imported_tot"]) + 
-                            ",\"power_max\":" + String(JsonDoc[meterPrefix + "active_power_tot"]) + "}";
-  Serial.println("httpRequestData:  " + httpRequestData);
-
-  //const char* ampxportal_apipath = "wp-json/ampx-energy/v1/log";
-  String ampxportal_apipath = "wp-json/ampx-energy/v1/log";
+void postToAmpXPortal(int meterNumber = 1) {
+  debugln("postToAmpXPortal function called");
   
-  //String url = String(ampxportal_server_local) + String(ampxportal_apipath);
-  String url = String(ampxportal_server_live) + String(ampxportal_apipath);
-  Serial.println("URL: " + url);
-
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;   
+  if ((WiFi.status() == WL_CONNECTED)) {
+    HTTPClient http;
+    
+    // Create the data for the POST request
+    String httpRequestData = "gateway_id=" + String(AMPX_GATEWAY_ID);
+    httpRequestData += "&meternumber=" + String(meterNumber);
+    String valuesList[] = {"name", "v_l1", "v_l2", "v_l3", "i_l1", "i_l2", "i_l3", "p_l1", "p_l2", "p_l3", "serial"};
+    
+    for (int i = 0; i < sizeof(valuesList) / sizeof(valuesList[0]); i++) {
+      httpRequestData += "&" + valuesList[i] + "=" + JsonDoc["m" + String(meterNumber) + "_" + valuesList[i]].as<String>();
+    }
+    
+    debugln("httpRequestData:  " + httpRequestData);
+    
+    // Your Domain name with URL path or IP address with path
+    #ifdef LOCAL
+      String url = String(ampxportal_server_local) + "/api/device/meter";
+    #else 
+      String url = String(ampxportal_server_live) + "/api/device/meter";
+    #endif
+    
+    debugln("URL: " + url);
+    
+    // Specify content-type header
     http.begin(url);
-    //Specify content-type header
-    http.addHeader("Content-Type", "application/json");
-  
-    // Send HTTP POST request
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    
+    // Send HTTP POST request and get response code
     int httpResponseCode = http.POST(httpRequestData);
-
-    // Check the response code
-    if (httpResponseCode > 0) {
-      String response = http.getString();
-      Serial.println(httpResponseCode);
-      Serial.println("Response: " + response);
-      //Indicate that we have internet connection and server response by turning on a LED.
-      digitalWrite(LED_4_INTERNET, HIGH);      
-    } else {
-      Serial.print("Error on sending POST: ");
-      Serial.println(httpResponseCode);
-      Serial.println("Error message: " + http.errorToString(httpResponseCode));
+    
+    // Get response
+    String response = http.getString();
+    
+    // Check result
+    debugln(httpResponseCode);
+    debugln("Response: " + response);
+    
+    // If error, print details
+    if (httpResponseCode <= 0) {
+      debug("Error on sending POST: ");
+      debugln(httpResponseCode);
+      debugln("Error message: " + http.errorToString(httpResponseCode));
     }
+    
     http.end();
-  
   } else {
-    Serial.println("WiFi Disconnected");
+    debugln("WiFi Disconnected");
   }
-
 }
-
 
 void detectNumberOfMeters(){
-  if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
-    uint16_t registerData[4];
-    //Find number of meters, 4 max number for now.
-    for (int i = 1; i <= maxNumberOfMeters; i++) {
-      // Read Serial number registers 70 and 71
-      if (modbus_read_registers_rs485(i, 70, 2, registerData)) {  // i is the Modbus slave ID
+  for (int i = 1; i <= maxNumberOfMeters; i++) {
+    uint16_t registerData[2];
+    if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
+      if (modbus_read_registers_rs485(i, 70, 2, registerData)) {
         uint32_t combinedValue = combineRegistersToInt32(registerData[0], registerData[1]);
-        //Serial.print("Serial Number: ");
-        //Serial.println(combinedValue);
-        //Update the number of meters if able to read its serial number
-        numberOfMeters = i;    
-      } else {
-      Serial.println("Error reading meter: " + String(i));
+        numberOfMeters++;
+        //debug("Serial Number: ");
+        //debugln(combinedValue);
       }
-    } 
-    } else
-  {
-    // MODBUS_TYPE = MODBUS_TYPE_TCPIP
-    // TCPIP is only used for handheld meters, there will always just be one.
+    } else {
+      debugln("Error reading meter: " + String(i));
+    }
+  }
+  //Use this is only one meter is connected via TCP/IP
+  if (MODBUS_TYPE == MODBUS_TYPE_TCPIP) {
     numberOfMeters = 1;
   }
-  Serial.println("Number of meters detected: " + String(numberOfMeters)); 
-  if (numberOfMeters >= 1){
-    //Indicate that one or more meters were detected by turning on a LED.
-    digitalWrite(LED_2_METER, HIGH);
-  }
+  debugln("Number of meters detected: " + String(numberOfMeters));
 }
 
-
-void doOTAUpdate() {
-  Serial.println("Starting OTA update...");
-
-  HTTPClient http;
-  http.begin(firmwareURL);
-
-  int httpCode = http.GET();
-  if (httpCode == HTTP_CODE_OK) {
-    int length = http.getSize();
-    WiFiClient* stream = http.getStreamPtr();
-
-    if (!Update.begin(length)) {
-      Serial.println("Not enough space for OTA update");
-      return;
-    }
-
-    // Start updating
-    size_t written = Update.writeStream(*stream);
-    if (written == length) {
-      Serial.println("Firmware written successfully!");
-      //TODO customize the update page here
-      // send the html with "text/html"
-      server.send(200, "text/plain", "Update completed!");
-    } else {
-      Serial.printf("Written only %d/%d bytes.\n", written, length);
-    }
-
-    // Check for success
-    if (Update.end()) {
-      if (Update.isFinished()) {
-        Serial.println("OTA update successful. Restarting...");
-        ESP.restart();
-      } else {
-        Serial.println("OTA update not finished.");
-      }
-    } else {
-      Serial.printf("OTA update failed: %s\n", Update.errorString());
-    }
-  } else {
-    Serial.printf("HTTP request failed. HTTP code: %d\n", httpCode);
-  }
-
-  http.end();
-}
 void handleUpdate() {
-  doOTAUpdate();
+  // Check if a file was submitted
+  if (server.hasArg("update") && server.arg("update") == "true") {
+    debugln("Starting OTA update...");
+    
+    // Get file from server
+    HTTPClient http;
+    http.begin(firmwareURL);
+    
+    // Get the file size
+    int httpCode = http.GET();
+    if (httpCode > 0) {
+      WiFiClient *client = http.getStreamPtr();
+      int contentLength = http.getSize();
+      
+      // Check if there's enough space
+      if (!Update.begin(contentLength)) {
+        debugln("Not enough space for OTA update");
+        server.send(200, "text/plain", "Not enough space for update");
+        return;
+      }
+      
+      // Write the file
+      size_t written = Update.writeStream(*client);
+      
+      if (written == contentLength) {
+        debugln("Firmware written successfully!");
+      } else {
+        #if DEBUG == 1
+          Serial.printf("Written only %d/%d bytes.\n", written, length);
+        #endif
+      }
+      
+      if (Update.end()) {
+        if (Update.isFinished()) {
+          debugln("OTA update successful. Restarting...");
+          server.send(200, "text/plain", "Update successful. Restarting...");
+          ESP.restart();
+        } else {
+          debugln("OTA update not finished.");
+        }
+      } else {
+        #if DEBUG == 1
+          Serial.printf("OTA update failed: %s\n", Update.errorString());
+        #endif
+      }
+    }
+    http.end();
+  }
+  
+  // Show update form
+  server.send(200, "text/html", "<html><body><h1>Update Firmware</h1><form method='post' action='/update'><input type='hidden' name='update' value='true'><input type='submit' value='Update Firmware'></form></body></html>");
 }

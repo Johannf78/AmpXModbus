@@ -1,5 +1,10 @@
-//Raw string literal quotation, webpage HTML...
-String webpage_settings = R"(
+#ifndef WEB_SETTINGS_H
+#define WEB_SETTINGS_H
+
+#include <pgmspace.h>
+
+// Store the settings HTML in program memory
+const char settings_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
 <head>
@@ -106,4 +111,36 @@ String webpage_settings = R"(
     init();
   }
 </script>
-  )";
+)rawliteral";
+
+// Settings page handler class
+class WebSettings {
+private:
+  String _buffer; // Temporary buffer for processing
+
+public:
+  WebSettings() {
+    // Initialize an empty buffer
+    _buffer = "";
+  }
+
+  // Get a fresh copy of the settings page from PROGMEM
+  void load() {
+    _buffer = FPSTR(settings_html);
+  }
+
+  // Replace a placeholder with a value
+  void replace(const String& placeholder, const String& value) {
+    _buffer.replace(placeholder, value);
+  }
+
+  // Get the processed settings page content
+  const String& getContent() const {
+    return _buffer;
+  }
+};
+
+// Create a global instance of the settings page handler
+WebSettings webpage_settings;
+
+#endif // WEB_SETTINGS_H
