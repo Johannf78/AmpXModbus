@@ -1,12 +1,3 @@
-#pragma GCC optimize ("-Os")
-#pragma GCC push_options
-
-// JSON optimization
-#define ARDUINOJSON_USE_DOUBLE 0
-#define ARDUINOJSON_USE_LONG_LONG 0
-#define ARDUINOJSON_ENABLE_STD_STRING 0
-#define ARDUINOJSON_ENABLE_ARDUINO_STRING 1
-
 /*
 the file "ampx_modbus_functions.ino" should be in the same directory as this .ino file.
 It is automatically included and merged with this file.
@@ -55,14 +46,13 @@ Select "node32s" under the boards.
 //Format: 25 02 0001 Year, Month, increment.
 #define AMPX_GATEWAY_ID 202503040001
 
-//Enable or disable debug output, set to 0 to disable debug output (saves memory)
-#define DEBUG 0  
+#define DEBUG 1
 #if DEBUG == 1
-  #define debug(...) Serial.print(__VA_ARGS__)
-  #define debugln(...) Serial.println(__VA_ARGS__)
+  #define debug(x) Serial.print(x)
+  #define debugln(x) Serial.println(x)
 #else
-  #define debug(...)
-  #define debugln(...)
+  #define debug(x)
+  #define debugln(x)
 #endif
 
 //There will be two variants of this gateway, one working with Modbus over RS485 and the other
@@ -70,7 +60,7 @@ Select "node32s" under the boards.
 #define MODBUS_TYPE_RS485 1
 #define MODBUS_TYPE_TCPIP 2
 //Set the required variant here:
-#define MODBUS_TYPE MODBUS_TYPE_TCPIP
+#define MODBUS_TYPE MODBUS_TYPE_RS485
 
 
 //1.Define the RS485 control pins
@@ -93,8 +83,15 @@ IPAddress subnet(255, 255, 255, 0); // Subnet mask
 IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
 
 
+<<<<<<< HEAD
 //Define optimized JSON documents with minimum required size
 StaticJsonDocument<512> JsonDoc;          //The JSonDocument is used to send data to the websocket.
+=======
+//The JSonDocument is used to send data to the websocket.
+JsonDocument JsonDoc;
+//JSON document for meter register definitions
+JsonDocument MeterRegisterDefs;
+>>>>>>> parent of fe29ddd (space usage reduction)
 
 
 
@@ -156,7 +153,7 @@ void setup() {
   if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
     // Initialize RS485 with Serial2
     rs485_init(&Serial2, RX_PIN, TX_PIN);
-    debugln("RS485 Modbus initialized");
+    Serial.println("RS485 Modbus initialized");
   } else {
     // MODBUS_TYPE = MODBUS_TYPE_TCPIP
     initEthernet();
@@ -172,9 +169,9 @@ void setup() {
   digitalWrite(LED_1_POWER, HIGH);
 
   // Debugging information
-  debug("AMPX_GATEWAY_ID: ");
-  debugln(AMPX_GATEWAY_ID);
-  debugln("Setup complete. Starting communication...");
+  Serial.print("AMPX_GATEWAY_ID: ");
+  Serial.println(AMPX_GATEWAY_ID);
+  Serial.println("Setup complete. Starting communication...");
   
   // Initialize meter register definitions
   setupMeterRegisters();
