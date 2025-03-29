@@ -95,7 +95,6 @@ IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
 
 //Define optimized JSON documents with minimum required size
 StaticJsonDocument<512> JsonDoc;          //The JSonDocument is used to send data to the websocket.
-StaticJsonDocument<128> MeterRegisterDefs; //This JSONDocument is used for meter register definitions
 
 
 
