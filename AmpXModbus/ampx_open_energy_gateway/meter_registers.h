@@ -1,3 +1,4 @@
+
 #ifndef METER_REGISTERS_H
 #define METER_REGISTERS_H
 
@@ -9,8 +10,7 @@ const int dataTypeInt64 = 2;
 const int dataTypeFloat = 3;
 
 // Global JSON document to store meter register definitions
-extern StaticJsonDocument<128> MeterRegisterDefs;
-
+extern JsonDocument MeterRegisterDefs;
 
 // This function sets up the meter register definitions in a JSON document
 void setupMeterRegisters() {
@@ -132,6 +132,13 @@ void setupMeterRegisters() {
   energyImportedTotal.add(dataTypeInt64);
   energyImportedTotal.add("Energy Imported Total");
   energyImportedTotal.add("active_energy_imported_tot");
+
+  // Print to Serial with pretty formatting
+ 
+  //debugln("MeterRegisterDefs Json.");
+  //serializeJsonPretty(MeterRegisterDefs, Serial);
+  //debugln(""); // Add a newline at the end
+
 }
 
 #endif // METER_REGISTERS_H 

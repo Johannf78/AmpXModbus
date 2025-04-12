@@ -1,12 +1,3 @@
-#pragma GCC optimize ("-Os")
-#pragma GCC push_options
-
-// JSON optimization
-#define ARDUINOJSON_USE_DOUBLE 0
-#define ARDUINOJSON_USE_LONG_LONG 0
-#define ARDUINOJSON_ENABLE_STD_STRING 0
-#define ARDUINOJSON_ENABLE_ARDUINO_STRING 1
-
 /*
 the file "ampx_modbus_functions.ino" should be in the same directory as this .ino file.
 It is automatically included and merged with this file.
@@ -25,20 +16,25 @@ Now select the port and then
 Select "node32s" under the boards.
 
 */
-
+//Required to communicate with the RS485 Controller.
+#include <HardwareSerial.h>
+//Connect to the local WiFi network
 #include <WiFi.h>
+//Creates a web server and serves a webpage with all the meter readings.
+//Install the library by tzapu, https://github.com/tzapu/WiFiManager, https://www.youtube.com/watch?v=Errh7LEEug0
+#include <WiFiManager.h> //This is used to dymanically configure the wifi connection .
 #include <WebServer.h>
 #include <HTTPClient.h>
 //Search for Arduino Websockets, install the one by Markus Sattler
 #include <WebSocketsServer.h>
 //Search for ArduinoJson, install the one by Benoit Blanchon
 #include <ArduinoJson.h>
+//Arduion Over the Air update functionality
 #include <ArduinoOTA.h>
 #include <Update.h>
 //Install the one by Vlodomyr Shymanskyy, https://github.com/vshymanskyy/Preferences
 #include <Preferences.h>
-//Install the library by tzapu, https://github.com/tzapu/WiFiManager, https://www.youtube.com/watch?v=Errh7LEEug0
-#include <WiFiManager.h>
+
 
 //The HTML code is stored in a seperate file, this makes the code easier to read.
 #include "webpage.h"
@@ -55,14 +51,13 @@ Select "node32s" under the boards.
 //Format: 25 02 0001 Year, Month, increment.
 #define AMPX_GATEWAY_ID 202503040001
 
-//Enable or disable debug output, set to 0 to disable debug output (saves memory)
-#define DEBUG 0  
+#define DEBUG 1
 #if DEBUG == 1
-  #define debug(...) Serial.print(__VA_ARGS__)
-  #define debugln(...) Serial.println(__VA_ARGS__)
+  #define debug(x) Serial.print(x)
+  #define debugln(x) Serial.println(x)
 #else
-  #define debug(...)
-  #define debugln(...)
+  #define debug(x)
+  #define debugln(x)
 #endif
 
 //There will be two variants of this gateway, one working with Modbus over RS485 and the other
@@ -95,6 +90,8 @@ IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
 
 //Define optimized JSON documents with minimum required size
 StaticJsonDocument<512> JsonDoc;          //The JSonDocument is used to send data to the websocket.
+//JSON document for meter register definitions
+JsonDocument MeterRegisterDefs;
 
 
 
@@ -103,6 +100,8 @@ StaticJsonDocument<512> JsonDoc;          //The JSonDocument is used to send dat
 #define LED_2_METER 14
 #define LED_3_WIFI 27
 #define LED_4_INTERNET 26
+
+//FritzFamily WiFi 03368098169909319946
 
 
 //Constant data types, used in the processRegisters function.
@@ -153,15 +152,6 @@ void setup() {
     ; // Wait for serial port to connect
   }
 
-  if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
-    // Initialize RS485 with Serial2
-    rs485_init(&Serial2, RX_PIN, TX_PIN);
-    debugln("RS485 Modbus initialized");
-  } else {
-    // MODBUS_TYPE = MODBUS_TYPE_TCPIP
-    initEthernet();
-  }
-
   // initialize LED status pins as outputs.
   pinMode(LED_1_POWER, OUTPUT);
   pinMode(LED_2_METER, OUTPUT);
@@ -172,9 +162,18 @@ void setup() {
   digitalWrite(LED_1_POWER, HIGH);
 
   // Debugging information
-  debug("AMPX_GATEWAY_ID: ");
-  debugln(AMPX_GATEWAY_ID);
-  debugln("Setup complete. Starting communication...");
+  Serial.print("AMPX_GATEWAY_ID: ");
+  Serial.println(AMPX_GATEWAY_ID);
+
+  if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
+    // Initialize RS485 with Serial2
+    rs485_init(&Serial2, RX_PIN, TX_PIN);
+    Serial.println("RS485 Modbus initialized");
+  } else {
+    // MODBUS_TYPE = MODBUS_TYPE_TCPIP
+    initEthernet();
+  }
+  Serial.println("Setup complete. Starting communication...");
   
   // Initialize meter register definitions
   setupMeterRegisters();

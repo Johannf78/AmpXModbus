@@ -1,10 +1,5 @@
-#ifndef WEBPAGE_H
-#define WEBPAGE_H
-
-#include <pgmspace.h>
-
-// Store the HTML code in program memory instead of RAM
-const char webpage_html[] PROGMEM = R"rawliteral(
+//Raw string literal quotation, webpage HTML...
+String webpage = R"(
 <!DOCTYPE html>
 <html>
 <head>
@@ -294,36 +289,4 @@ const char webpage_html[] PROGMEM = R"rawliteral(
   }
 </script>
 </html>
-)rawliteral";
-
-// Replacement class - a memory-efficient way to handle the webpage with placeholders
-class Webpage {
-private:
-  String _buffer; // Temporary buffer for processing
-
-public:
-  Webpage() {
-    // Initialize an empty buffer
-    _buffer = "";
-  }
-
-  // Get a fresh copy of the webpage from PROGMEM
-  void load() {
-    _buffer = FPSTR(webpage_html);
-  }
-
-  // Replace a placeholder with a value
-  void replace(const String& placeholder, const String& value) {
-    _buffer.replace(placeholder, value);
-  }
-
-  // Get the processed webpage content
-  const String& getContent() const {
-    return _buffer;
-  }
-};
-
-// Create a global instance of the webpage handler
-Webpage webpage;
-
-#endif // WEBPAGE_H
+  )";
