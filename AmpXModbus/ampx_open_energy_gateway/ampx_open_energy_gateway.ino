@@ -42,16 +42,12 @@ Select "node32s" under the boards.
 //Define the meter registers and datatypes here
 #include "meter_registers.h"
 
-//Include AmpX custom written libraries for Modbus
-//Saved in the D:\OneDrive\JF Data\UserData\Documents\Arduino\libraries folder
-#include <ampx_modbus_tcpip.h>
-#include <ampx_modbus_rs485.h>
-
 //Unique Gateway ID for each gateway manufactured. To be used when adding it to a the portal under a specific user.
 //Format: 25 02 0001 Year, Month, increment.
+//TODO: JF 2025-05-05 This needs to be moved to the permanent settings and web page with admin settings created.
 #define AMPX_GATEWAY_ID 202503040001
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG == 1
   #define debug(x) Serial.print(x)
   #define debugln(x) Serial.println(x)
@@ -64,9 +60,16 @@ Select "node32s" under the boards.
 //working with mobus over TCP/IP, this is setup here and used depeding on what is needed.
 #define MODBUS_TYPE_RS485 1
 #define MODBUS_TYPE_TCPIP 2
-//Set the required variant here:
-#define MODBUS_TYPE MODBUS_TYPE_TCPIP
+//Set the required variant here:________________________________________________________
+#define MODBUS_TYPE MODBUS_TYPE_RS485
 
+//Include AmpX custom written libraries for Modbus
+//Saved in the D:\OneDrive\JF Data\UserData\Documents\Arduino\libraries folder
+#if MODBUS_TYPE == MODBUS_TYPE_RS485
+  #include <ampx_modbus_rs485.h>
+#else
+  #include <ampx_modbus_tcpip.h>
+#endif
 
 //1.Define the RS485 control pins
 #define MAX485_DE 4 //White
@@ -95,7 +98,7 @@ JsonDocument MeterRegisterDefs;
 
 
 
-//Define the Status indicating LEDs pins
+//Define the Status indicating LEDs pins, Commented for 
 #define LED_1_POWER 12
 #define LED_2_METER 14
 #define LED_3_WIFI 27
@@ -116,14 +119,17 @@ bool readSerial = false;
 
 
 //EMONCMS, Remote energy logging, https://JsonDocs.openenergymonitor.org/emoncms/index.html
+//TODO This needs to be removed, can forward to other portal from ampx portal
 const char* emoncms_server = "http://emoncms.org";
 const char* api_key = "c0526f06893d1063800d3bb966927711"; //your_API_KEY
 
 //AmpX Energy Portal, Remote energy logging
+//TODO This needs to be saved in persistent memory and moved to the web admin settings page.
 const char* ampxportal_server_local = "http://appampxco.local/";
 const char* ampxportal_server_live = "https://app.ampx.co/";
 
 
+//TODO: Improve this code use an array and do not use strings.
 String m1_serial_number = "";  // Meter one serial number
 String m2_serial_number = "";
 String m3_serial_number = "";
@@ -167,7 +173,8 @@ void setup() {
 
   if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
     // Initialize RS485 with Serial2
-    rs485_init(&Serial2, RX_PIN, TX_PIN);
+    //Serial 2 for ESP32Wroom, Serial 1 for XIAO
+    rs485_init(&Serial1, RX_PIN, TX_PIN);
     Serial.println("RS485 Modbus initialized");
   } else {
     // MODBUS_TYPE = MODBUS_TYPE_TCPIP
