@@ -1,0 +1,30 @@
+# AmpX Modbus Project Intelligence
+
+## Memory Bank
+- Remember to read the entire Memory Bank at the start of each session
+- Update activeContext.md and progress.md after each significant development milestone
+- Follow the established hierarchy when updating documentation
+- Maintain clear relationships between all documentation files
+
+## Project Patterns
+- This is an ESP32-based Modbus TCP/IP server implementation
+- The project is focused on industrial audio amplification equipment
+- Documentation follows a structured approach with the Memory Bank system
+
+## User Preferences
+- Prefer step-by-step approaches when implementing new features
+- Test each component before proceeding to the next stage
+- Maintain comprehensive documentation of all implementation decisions
+
+## Implementation Guidelines
+- Follow C++ best practices for embedded systems
+- Prioritize memory efficiency and response time in implementations
+- Consider error handling at all levels of the architecture
+- Use clear and consistent naming conventions
+
+## Learning Focus
+- As the project develops, document key insights and patterns in this file
+- Track rationale for technical decisions
+- Maintain notes on implementation challenges and solutions
+
+This file will evolve as project patterns and preferences become more established. 

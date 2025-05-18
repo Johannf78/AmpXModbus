@@ -30,8 +30,8 @@ Select "node32s" under the boards.
 //Search for ArduinoJson, install the one by Benoit Blanchon
 #include <ArduinoJson.h>
 //Arduion Over the Air update functionality
-#include <ArduinoOTA.h>
-#include <Update.h>
+//#include <ArduinoOTA.h>
+//#include <Update.h>
 //Install the one by Vlodomyr Shymanskyy, https://github.com/vshymanskyy/Preferences
 #include <Preferences.h>
 
@@ -91,8 +91,11 @@ IPAddress subnet(255, 255, 255, 0); // Subnet mask
 IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
 
 
-//Define optimized JSON documents with minimum required size
-StaticJsonDocument<512> JsonDoc;          //The JSonDocument is used to send data to the websocket.
+//The JsonDocument is used to send data to the websocket....
+
+//StaticJsonDocument<512> JsonDoc;          //Define optimized JSON documents with minimum required size. StaticJsonDocument allocates memory on the stack (fixed at compile time)
+DynamicJsonDocument JsonDoc(2048);        //DynamicJsonDocument allocates memory on the heap (dynamic at runtime)
+
 //JSON document for meter register definitions
 JsonDocument MeterRegisterDefs;
 
@@ -147,10 +150,13 @@ Preferences preferences;
 
 //Function prototypes, it needs to be here because it is used in the setup function.
 //one needs to add a forward declaration for this function as well, as it is define in functions.ino
-void handlePowerMeterRS485(int meterNumber);
-void handlePowerMeterTCPIP(int meterNumber);
+//void handlePowerMeterRS485(int meterNumber);
+//void handlePowerMeterTCPIP(int meterNumber);
+void handlePowerMeter(int meterNumber);
 void postToAmpXPortal(int meterNumber);
 void setupMeterRegisters();
+void detectNumberOfMeters();
+void handleWebSocket();
 
 void setup() {
   Serial.begin(9600); // Debug serial
@@ -171,6 +177,7 @@ void setup() {
   Serial.print("AMPX_GATEWAY_ID: ");
   Serial.println(AMPX_GATEWAY_ID);
 
+  /*
   if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
     // Initialize RS485 with Serial2
     //Serial 2 for ESP32Wroom, Serial 1 for XIAO
@@ -178,8 +185,18 @@ void setup() {
     Serial.println("RS485 Modbus initialized");
   } else {
     // MODBUS_TYPE = MODBUS_TYPE_TCPIP
+    //JF: Commented to reduce file size, uncomment when using tcpip
     initEthernet();
   }
+  */
+
+  #if MODBUS_TYPE == MODBUS_TYPE_RS485
+    rs485_init(&Serial1, RX_PIN, TX_PIN);
+    Serial.println("RS485 Modbus initialized");
+  #else
+    initEthernet();
+  #endif
+  
   Serial.println("Setup complete. Starting communication...");
   
   // Initialize meter register definitions
@@ -199,11 +216,18 @@ void setup() {
 
   //Do the initial reading of the meters and update of the webpage, then repeat after 3 seconds in the loop.
   for (int i = 1; i <= numberOfMeters; i++) {
+    /*
     if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
       handlePowerMeterRS485(i); //Pass the meter number to the function. Updtate the values on the local web page.
     } else { // MODBUS_TYPE = MODBUS_TYPE_TCPIP
       handlePowerMeterTCPIP(i); //Pass the meter number to the function. Updtate the values on the local web page.
     }
+    */
+    //JF: New fuction to handle both RS485 and TCPIP
+    handlePowerMeter(i);
+    
+
+
     postToAmpXPortal(i); //Also post to the remote server as soon as the device starts up.
   }
   handleWebSocket();
@@ -211,7 +235,8 @@ void setup() {
 }
 
 void loop() {
-  ArduinoOTA.handle();
+  //JF commented out to reduce size
+  //ArduinoOTA.handle();
 
   static unsigned long counter1 = 0;
   static unsigned long counter2 = 0;
@@ -221,11 +246,14 @@ void loop() {
   // Read the parameters every 3 seconds
   if (now - counter1 > 3000) {
     for (int i = 1; i <= numberOfMeters; i++) {
+      /*
       if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
         handlePowerMeterRS485(i); //Pass the meter number to the function. Updtate the values on the local web page.
       } else { // MODBUS_TYPE = MODBUS_TYPE_TCPIP
         handlePowerMeterTCPIP(i); //Pass the meter number to the function. Updtate the values on the local web page.
-      }
+      }*/
+       //JF: New fuction to handle both RS485 and TCPIP
+      handlePowerMeter(i);
     }
     handleWebSocket();
     counter1 = now;
