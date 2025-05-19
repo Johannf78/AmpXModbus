@@ -39,13 +39,14 @@ Select "node32s" under the boards.
 //The HTML code is stored in a seperate file, this makes the code easier to read.
 #include "webpage.h"
 #include "web_settings.h"
+#include "web_admin.h"
 //Define the meter registers and datatypes here
 #include "meter_registers.h"
 
 //Unique Gateway ID for each gateway manufactured. To be used when adding it to a the portal under a specific user.
 //Format: 25 02 0001 Year, Month, increment.
 //TODO: JF 2025-05-05 This needs to be moved to the permanent settings and web page with admin settings created.
-#define AMPX_GATEWAY_ID 202503040001
+#define AMPX_GATEWAY_ID 100001
 
 #define DEBUG 0
 #if DEBUG == 1
@@ -92,14 +93,11 @@ IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
 
 
 //The JsonDocument is used to send data to the websocket....
-
 //StaticJsonDocument<512> JsonDoc;          //Define optimized JSON documents with minimum required size. StaticJsonDocument allocates memory on the stack (fixed at compile time)
 DynamicJsonDocument JsonDoc(2048);        //DynamicJsonDocument allocates memory on the heap (dynamic at runtime)
 
 //JSON document for meter register definitions
 JsonDocument MeterRegisterDefs;
-
-
 
 //Define the Status indicating LEDs pins, Commented for 
 #define LED_1_POWER 12
@@ -108,7 +106,6 @@ JsonDocument MeterRegisterDefs;
 #define LED_4_INTERNET 26
 
 //FritzFamily WiFi 03368098169909319946
-
 
 //Constant data types, used in the processRegisters function.
 //These are now defined in meter_registers.h

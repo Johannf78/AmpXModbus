@@ -250,7 +250,7 @@ void processRegisters(uint16_t* registerData, uint16_t numRegisters, int registe
   
 }
 
-s
+
 //JF New combined function for RS485 and TCP
 void handlePowerMeter(int meterNumber = 1) {
   uint16_t registerData[4];
@@ -386,7 +386,7 @@ void detectNumberOfMeters(){
   Serial.println("");
 }
 
-/*
+/* Temporary disabled OTA update to reduce code size.
 void doOTAUpdate() {
   Serial.println("Starting OTA update...");
 

@@ -7,7 +7,6 @@
                 "D:/OneDrive/JF Data/UserData/Documents/Arduino/**",
                 "C:/Users/Johann/AppData/Local/Arduino15/packages/**",
                 "C:/Users/Johann/AppData/Local/Arduino15/packages/arduino/hardware/avr/1.8.6/**",
-                "C:/Users/Johann/AppData/Local/Arduino15/packages/esp32/hardware/esp32/**",
                 "C:/Users/Johann/AppData/Local/Arduino15/packages/esp32/hardware/esp32/**"
             ],
             "defines": [
