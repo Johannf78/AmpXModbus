@@ -129,7 +129,7 @@ const char* ampxportal_server_local = "http://192.168.2.32:8080/api/";
 const char* ampxportal_server_live = "https://app.ampx.co/";
 
 // Development flag - set to true for local development, false for production
-#define USE_LOCAL_SERVER false
+#define USE_LOCAL_SERVER true
 
 
 //TODO: Improve this code use an array and do not use strings.
