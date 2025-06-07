@@ -61,9 +61,10 @@ A comprehensive ESP32-based energy monitoring gateway that communicates with Mea
 ## 🚀 Installation
 
 ### Prerequisites
-- [Arduino IDE](https://www.arduino.cc/en/software) or [PlatformIO](https://platformio.org/)
-- ESP32 Board Package
+- [Arduino IDE](https://www.arduino.cc/en/software) (recommended)
+- ESP32 Board Package for Arduino IDE
 - Required Arduino libraries (see Dependencies section)
+- Optional: [PlatformIO](https://platformio.org/) (alternative IDE)
 
 ### Quick Start
 
@@ -74,8 +75,8 @@ A comprehensive ESP32-based energy monitoring gateway that communicates with Mea
    ```
 
 2. **Open the Project**
-   - Arduino IDE: Open `AmpXModbus/ampx_open_energy_gateway/ampx_open_energy_gateway.ino`
-   - PlatformIO: Open the project folder
+   - **Arduino IDE** (recommended): Open `AmpXModbus/ampx_open_energy_gateway/ampx_open_energy_gateway.ino`
+   - Alternative - PlatformIO: Open the project folder
 
 3. **Configure Hardware Type**
    
