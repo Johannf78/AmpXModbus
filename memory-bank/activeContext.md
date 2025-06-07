@@ -1,7 +1,7 @@
 # Active Context: AmpX Energy Gateway
 
 ## Current Focus
-The current development focus is on optimizing the existing AmpX Energy Gateway implementation, addressing potential issues, and enhancing reliability.
+The current development focus is on setting up a proper development environment for ESP32 testing. We've pivoted from using LocalWP (which fights external access) to setting up a Linux development server that the ESP32 can easily connect to.
 
 ## Recent Changes
 - Created Memory Bank structure with core documentation
@@ -12,19 +12,19 @@ The current development focus is on optimizing the existing AmpX Energy Gateway 
 - Identified but deferred String optimization for future implementation
 
 ## Next Steps
-1. Continue optimizing specific areas of code:
-   - Error handling and recovery mechanisms
+1. Set up Linux development server:
+   - Complete WSL2 Ubuntu 24.04 installation
+   - Choose development stack (LAMP/Node.js/Python)
+   - Configure API endpoints that mirror WordPress structure
+   - Set up network access for ESP32 connections
+2. Update ESP32 code for development:
+   - Configure local development API endpoint
+   - Test API communication with new server
+   - Validate data upload functionality
+3. Resume optimization work:
    - Security enhancements for credentials
    - Memory usage optimization
-   - Performance improvements for multi-meter support
-2. Implement comprehensive testing
-   - Test with multiple meters
-   - Validate both RS485 and TCP/IP variants
-   - Stress test data collection and transmission
-3. Address TODOs in the codebase
-   - API credentials storage
-   - Improve meter serial number handling
-   - Clean up commented code
+   - Error handling improvements
 
 ## Current Implementation Status
 - Basic architecture is in place and working

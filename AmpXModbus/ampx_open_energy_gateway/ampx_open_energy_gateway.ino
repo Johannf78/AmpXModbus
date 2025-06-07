@@ -125,8 +125,11 @@ const char* api_key = "c0526f06893d1063800d3bb966927711"; //your_API_KEY
 
 //AmpX Energy Portal, Remote energy logging
 //TODO This needs to be saved in persistent memory and moved to the web admin settings page.
-const char* ampxportal_server_local = "http://appampxco.local/";
+const char* ampxportal_server_local = "http://192.168.2.32:8080/api/";
 const char* ampxportal_server_live = "https://app.ampx.co/";
+
+// Development flag - set to true for local development, false for production
+#define USE_LOCAL_SERVER false
 
 
 //TODO: Improve this code use an array and do not use strings.
