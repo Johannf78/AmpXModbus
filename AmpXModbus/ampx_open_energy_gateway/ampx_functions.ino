@@ -300,6 +300,16 @@ void handlePowerMeter(int meterNumber = 1) {
       Serial.println("Error reading register " + String(registerNumber));
     }
   }
+
+    // 🔥 ADD THIS CODE TO DISPLAY THE JSON 🔥
+    /*
+  Serial.println("=== JSON Document for Meter " + String(meterNumber) + " ===");
+  String jsonString;
+  serializeJsonPretty(JsonDoc, jsonString);
+  Serial.println(jsonString);
+  Serial.println("=== JSON Size: " + String(JsonDoc.memoryUsage()) + " bytes ===");
+  Serial.println();
+  */
 }
 
 
@@ -349,6 +359,89 @@ void postToAmpXPortal(int meterNumber = 1) { //old postToRemoteServer
     Serial.println("WiFi Disconnected");
   }
 
+}
+
+void postToAmpXPortal2(int meterNumber = 1) {
+  Serial.println("postToAmpXPortal2 function called - Docker API");
+
+  String meterPrefix = "m" + String(meterNumber) + "_";
+  
+  // Create timestamp in ISO 8601 format
+  unsigned long seconds = millis() / 1000;
+  unsigned long hours = (seconds / 3600) % 24;
+  unsigned long minutes = (seconds / 60) % 60;
+  unsigned long secs = seconds % 60;
+  
+  String timestamp = "2025-01-28T";
+  if (hours < 10) timestamp += "0";
+  timestamp += String(hours) + ":";
+  if (minutes < 10) timestamp += "0";
+  timestamp += String(minutes) + ":";
+  if (secs < 10) timestamp += "0";
+  timestamp += String(secs) + "Z";
+  
+  // Start building the JSON manually for Docker API format
+  String httpRequestData = "{";
+  httpRequestData += "\"gateway_id\":\"" + String(AMPX_GATEWAY_ID) + "\",";
+  httpRequestData += "\"meter_id\":\"meter_" + String(meterNumber) + "\",";
+  httpRequestData += "\"timestamp\":\"" + timestamp + "\",";
+  httpRequestData += "\"values\":{";
+  
+  // Add all meter readings from JsonDoc to the values object
+  bool firstValue = true;
+  for (JsonPair kv : JsonDoc.as<JsonObject>()) {
+    String key = kv.key().c_str();
+    
+    // Only include readings for this meter (starts with correct prefix)
+    if (key.startsWith(meterPrefix)) {
+      if (!firstValue) {
+        httpRequestData += ",";
+      }
+      httpRequestData += "\"" + key + "\":" + String(kv.value().as<String>());
+      firstValue = false;
+    }
+  }
+  
+  httpRequestData += "}}"; // Close values object and main object
+  
+  Serial.println("httpRequestData: " + httpRequestData);
+
+  // Use Docker API URL directly
+  //String url = "http://192.168.2.32:8080/api/";
+  
+  // Use the existing local server variable
+  String url = String(ampxportal_server_local);
+  Serial.println("URL: " + url);
+
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;   
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
+  
+    // Send HTTP POST request
+    int httpResponseCode = http.POST(httpRequestData);
+
+    // Check the response code
+    if (httpResponseCode > 0) {
+      String response = http.getString();
+      Serial.println("HTTP Response Code: " + String(httpResponseCode));
+      Serial.println("Response: " + response);
+      
+      // Success indicator for Docker API
+      if (httpResponseCode == 201) {
+        Serial.println("✅ SUCCESS: Data sent to Docker API!");
+        digitalWrite(LED_4_INTERNET, HIGH);
+      }
+    } else {
+      Serial.print("❌ Error on sending POST: ");
+      Serial.println(httpResponseCode);
+      Serial.println("Error message: " + http.errorToString(httpResponseCode));
+    }
+    http.end();
+  
+  } else {
+    Serial.println("WiFi Disconnected");
+  }
 }
 
 

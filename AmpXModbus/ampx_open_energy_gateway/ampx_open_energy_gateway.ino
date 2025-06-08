@@ -153,7 +153,7 @@ Preferences preferences;
 //void handlePowerMeterRS485(int meterNumber);
 //void handlePowerMeterTCPIP(int meterNumber);
 void handlePowerMeter(int meterNumber);
-void postToAmpXPortal(int meterNumber);
+void postToAmpXPortal2(int meterNumber);
 void setupMeterRegisters();
 void detectNumberOfMeters();
 void handleWebSocket();
@@ -228,7 +228,7 @@ void setup() {
     
 
 
-    postToAmpXPortal(i); //Also post to the remote server as soon as the device starts up.
+    postToAmpXPortal2(i); //Also post to the remote server as soon as the device starts up.
   }
   handleWebSocket();
 
@@ -260,11 +260,12 @@ void loop() {
   }
 
   // Post meter data to remote server every 5 minutes, 300000
-  if (now - counter2 > 300000) {
+  //TODO: JF 2025-06-08 for testing, i decreased it to 30 seconds.
+  if (now - counter2 > 30000) {
     //Post meter data to remote server
     for (int i = 1; i <= numberOfMeters; i++) {
       //postToEmonCMS(i);
-      postToAmpXPortal(i);
+      postToAmpXPortal2(i);
     }
     counter2 = now;
   }

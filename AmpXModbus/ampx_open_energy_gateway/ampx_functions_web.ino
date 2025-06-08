@@ -91,10 +91,10 @@ void handleWebSocket() {
   //Send the JSON document to the websocket.
   webSocket.broadcastTXT(JsonString);
 
-  Serial.println("Sent JSON to websocket");
+  //Serial.println("Sent JSON to websocket");
   //Serial.println(JsonString);
   // Pretty print with indentation of 2 spaces
-  serializeJsonPretty(JsonDoc, Serial);
+  //serializeJsonPretty(JsonDoc, Serial);
 }
 
 void postToEmonCMS(int meterNumber = 1) { 

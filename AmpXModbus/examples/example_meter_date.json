@@ -1,0 +1,16 @@
+{
+  "m1_voltage_L1": "0.00",
+  "m1_voltage_L2": "0.00",
+  "m1_voltage_L3": "0.00",
+  "m1_current_L1": "3.03",
+  "m1_current_L2": "4.29",
+  "m1_current_L3": "3.04",
+  "m1_current_avg": "10.82",
+  "m1_active_power_L1": "0.00",
+  "m1_active_power_L2": "0.00",
+  "m1_active_power_L3": "0.00",
+  "m1_active_power_tot": "0.00",
+  "m1_active_energy_imported_L1": "33.09",
+  "m1_active_energy_imported_L2": "2.35",
+  "m1_active_energy_imported_L3": "2.81",
+}
