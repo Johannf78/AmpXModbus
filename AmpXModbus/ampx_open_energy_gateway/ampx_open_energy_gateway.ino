@@ -29,6 +29,8 @@ Select "node32s" under the boards.
 #include <WebSocketsServer.h>
 //Search for ArduinoJson, install the one by Benoit Blanchon
 #include <ArduinoJson.h>
+//Time library for NTP synchronization
+#include <time.h>
 //Arduion Over the Air update functionality
 //#include <ArduinoOTA.h>
 //#include <Update.h>
@@ -157,6 +159,8 @@ void postToAmpXPortal2(int meterNumber);
 void setupMeterRegisters();
 void detectNumberOfMeters();
 void handleWebSocket();
+void initNTP();
+String getCurrentTimestamp();
 
 void setup() {
   Serial.begin(9600); // Debug serial
@@ -204,6 +208,9 @@ void setup() {
 
   // Initialize WiFi
   initWiFi(); //Program will not continue unless WiFi is connected..
+
+  // Initialize NTP time synchronization (must be after WiFi)
+  initNTP();
 
   // Initialize NVS (Local Permanent Storage)
   initNvs();  
