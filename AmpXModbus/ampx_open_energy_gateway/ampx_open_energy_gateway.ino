@@ -267,8 +267,8 @@ void loop() {
   }
 
   // Post meter data to remote server every 5 minutes, 300000
-  //TODO: JF 2025-06-08 for testing, i decreased it to 30 seconds.
-  if (now - counter2 > 30000) {
+  //TODO: JF 2025-06-08 for testing, i decreased it to 30 seconds (30000).
+  if (now - counter2 > 300000) {
     //Post meter data to remote server
     for (int i = 1; i <= numberOfMeters; i++) {
       //postToEmonCMS(i);
