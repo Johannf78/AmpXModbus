@@ -17,6 +17,7 @@
 - ✅ Modular initialization for NVS, WiFi, and NTP
 - ✅ Dual API integration (WordPress and Docker API)
 - ✅ Status LEDs for real-time feedback
+- ✅ Moved shared Modbus functions to ampx_functions_modbus.ino (start of modularization)
 
 ## Current Status
 The project has a robust, unified implementation for the AmpX Energy Gateway. The code supports both RS485 and TCP/IP communication, auto-detects meters, processes and uploads data to multiple APIs, and provides real-time feedback via LEDs and web interface. Focus is now on optimization, maintainability, and moving settings to persistent storage.
@@ -56,6 +57,7 @@ The project has a robust, unified implementation for the AmpX Energy Gateway. Th
 | Codebase Evaluation | ✅ Completed | - |
 | Unified Modbus Handler | ✅ Completed | - |
 | Dual API Integration | ✅ Completed | - |
+| Modularization Started | ✅ Completed | - |
 | Security Enhancements | 📋 Planned | - |
 | Memory Optimization | 📋 Planned | - |
 | Error Handling Improvement | 📋 Planned | - |

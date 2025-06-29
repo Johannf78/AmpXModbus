@@ -1,43 +1,29 @@
 # Active Context: AmpX Energy Gateway
 
 ## Current Focus
-The current development focus is on optimizing and maintaining a robust, unified codebase for the ESP32-based AmpX Energy Gateway. The system now features a single handler for both RS485 and TCP/IP Modbus communication, robust initialization routines, and improved API integration.
+The current development focus is on codebase modularization for maintainability. The shared Modbus functions have been moved to a new file, ampx_functions_modbus.ino. Further modularization is planned for network, API, meter, and web functions.
 
 ## Recent Changes
-- Implemented shared Modbus functions for register conversion (float, int32, int64)
-- Unified meter handling with `handlePowerMeter` for both RS485 and TCP/IP
-- Modular initialization for NVS, WiFi (WiFiManager), and NTP
-- Enhanced error handling and status indication via serial and LEDs
-- Integrated two API upload methods (WordPress and Docker API)
-- Added TODOs for moving credentials/settings to persistent storage and web admin
+- Moved all shared Modbus functions (register conversion, processRegisters) to ampx_functions_modbus.ino
+- Verified removal from original file
+- Outlined next steps for modularizing network, API, meter, and web functions
 
 ## Next Steps
-1. Move API endpoints and credentials to persistent storage and web admin interface
-2. Optimize string handling and reduce memory fragmentation
-3. Clean up legacy/commented code and consolidate duplication
-4. Continue improving error handling and recovery mechanisms
-5. Expand multi-meter support and test with more than 4 meters
+1. Create new files for network, API, meter, and web functions
+2. Move corresponding functions to their new files
+3. Test and verify all functionality after each move
+4. Update documentation and Memory Bank after each major change
 
 ## Current Implementation Status
-- Unified Modbus handler in place and working
-- Robust initialization and connectivity routines
-- Web interface and WebSocket updates functional
-- Dual API integration (WordPress and Docker API)
-- Status LEDs provide real-time feedback
+- Modbus functions now modularized
+- Main codebase still contains network, API, meter, and web functions (to be moved)
 
 ## Active Decisions
-- **Unified Handler**: All meter types handled by a single function for maintainability
-- **DynamicJsonDocument**: Used for flexible memory management
-- **Status LEDs**: Used for real-time feedback on system state
-
-## Open Questions
-- What is the expected production scale (meters, frequency)?
-- Are there additional security requirements for API endpoints?
-- Should all settings be user-configurable via web admin?
+- Adopt a modular file structure for maintainability and clarity
 
 ## Timeline Considerations
-- Prioritize optimizations that improve reliability and maintainability
-- Test all changes with live hardware
-- Document all new patterns and decisions
+- Continue modularization in next session
+- Test after each refactor step
+- Keep Memory Bank and documentation in sync
 
-This document will be updated regularly as development progresses and context evolves. 
+This document will be updated as modularization progresses. 
