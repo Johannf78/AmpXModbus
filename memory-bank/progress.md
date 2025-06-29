@@ -13,49 +13,49 @@
 - ✅ Discovered that project is already implemented, pivoted to optimization
 - ✅ Conducted detailed code review with optimization recommendations
 - ✅ Implemented first optimization: increased JSON document capacity with DynamicJsonDocument
+- ✅ Unified Modbus handler for RS485 and TCP/IP
+- ✅ Modular initialization for NVS, WiFi, and NTP
+- ✅ Dual API integration (WordPress and Docker API)
+- ✅ Status LEDs for real-time feedback
 
 ## Current Status
-The project has a working implementation of the AmpX Energy Gateway. The code supports both RS485 and TCP/IP communication with Meatrol Brand meters, data collection from multiple meters, a web interface with real-time updates, and API integration. Our focus has shifted from implementation to optimization, with initial improvements already applied.
+The project has a robust, unified implementation for the AmpX Energy Gateway. The code supports both RS485 and TCP/IP communication, auto-detects meters, processes and uploads data to multiple APIs, and provides real-time feedback via LEDs and web interface. Focus is now on optimization, maintainability, and moving settings to persistent storage.
 
 ## In Progress
-- 🔄 Addressing high-priority optimizations from code review
-- 🔄 Exploring error handling improvements
+- 🔄 Moving API endpoints and credentials to persistent storage/web admin
+- 🔄 Optimizing string handling and memory usage
+- 🔄 Cleaning up legacy/commented code
+- 🔄 Improving error handling and recovery
 
 ## Upcoming Work
 - 📋 Implement security enhancements (credential management)
-- 📋 Improve error handling and recovery mechanisms
-- 📋 Optimize memory usage (String objects, etc.)
-- 📋 Enhance performance for multi-meter support
-- 📋 Conduct comprehensive testing
-- 📋 Clean up code (remove commented sections, consolidate duplication)
-- 📋 Update documentation for deployment and maintenance
+- 📋 Expand multi-meter support and test with more meters
+- 📋 Comprehensive testing and documentation
 
 ## Current Implementation Status
-- ✅ Basic architecture in place and functioning
-- ✅ RS485 communication module working
-- ✅ TCP/IP communication module working
-- ✅ Multi-meter support (up to 32 meters)
-- ✅ Web interface with real-time updates
-- ✅ API upload functionality
-- ✅ JSON document capacity optimized
-- ❌ Security for credentials not optimized
-- ❌ Memory usage from String objects not optimized
-- ❌ Some redundant code remains
+- ✅ Unified Modbus handler
+- ✅ Robust initialization and connectivity
+- ✅ Multi-meter support (currently up to 4, architecture supports more)
+- ✅ Web interface and WebSocket updates
+- ✅ Dual API upload functionality
+- ✅ Status LEDs for system state
+- ❌ Credentials/settings not yet in persistent storage
+- ❌ Some legacy/commented code remains
+- ❌ String handling not yet optimized
 
 ## Known Issues
-- Security: Credentials in code (WiFi passwords, API keys)
-- Memory: Heavy use of String objects can lead to fragmentation
-- Error handling: Limited recovery mechanisms for failures
-- Daily restart mechanism indicates potential memory leaks
-- Multiple global variables increase risk of side effects
+- Credentials and API endpoints are hardcoded
+- Heavy use of String objects may cause memory fragmentation
+- Some redundant/legacy code remains
+- Error handling can be further improved
 
 ## Milestones
 | Milestone | Status | Target Date |
 |-----------|--------|-------------|
 | Memory Bank Setup | ✅ Completed | - |
 | Codebase Evaluation | ✅ Completed | - |
-| Implementation Evaluation | ✅ Completed | - |
-| Initial Optimization (JSON doc) | ✅ Completed | - |
+| Unified Modbus Handler | ✅ Completed | - |
+| Dual API Integration | ✅ Completed | - |
 | Security Enhancements | 📋 Planned | - |
 | Memory Optimization | 📋 Planned | - |
 | Error Handling Improvement | 📋 Planned | - |
@@ -63,4 +63,4 @@ The project has a working implementation of the AmpX Energy Gateway. The code su
 | Comprehensive Testing | 📋 Planned | - |
 
 ## Notes
-The project scope has fundamentally changed from "we need to implement this" to "we need to optimize an existing implementation." This offers a more efficient path forward as we can focus on enhancing specific aspects of the working system rather than building from scratch. 
+The project is now focused on optimizing and maintaining a robust, unified implementation, with emphasis on reliability, maintainability, and user-friendly configuration. 

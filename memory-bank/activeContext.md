@@ -1,53 +1,43 @@
 # Active Context: AmpX Energy Gateway
 
 ## Current Focus
-The current development focus is on setting up a proper development environment for ESP32 testing. We've pivoted from using LocalWP (which fights external access) to setting up a Linux development server that the ESP32 can easily connect to.
+The current development focus is on optimizing and maintaining a robust, unified codebase for the ESP32-based AmpX Energy Gateway. The system now features a single handler for both RS485 and TCP/IP Modbus communication, robust initialization routines, and improved API integration.
 
 ## Recent Changes
-- Created Memory Bank structure with core documentation
-- Completed codebase review of existing implementation
-- Updated project scope based on clarified requirements
-- Discovered that the project already has a working implementation
-- Optimized JSON document size by switching to DynamicJsonDocument with increased capacity
-- Identified but deferred String optimization for future implementation
+- Implemented shared Modbus functions for register conversion (float, int32, int64)
+- Unified meter handling with `handlePowerMeter` for both RS485 and TCP/IP
+- Modular initialization for NVS, WiFi (WiFiManager), and NTP
+- Enhanced error handling and status indication via serial and LEDs
+- Integrated two API upload methods (WordPress and Docker API)
+- Added TODOs for moving credentials/settings to persistent storage and web admin
 
 ## Next Steps
-1. Set up Linux development server:
-   - Complete WSL2 Ubuntu 24.04 installation
-   - Choose development stack (LAMP/Node.js/Python)
-   - Configure API endpoints that mirror WordPress structure
-   - Set up network access for ESP32 connections
-2. Update ESP32 code for development:
-   - Configure local development API endpoint
-   - Test API communication with new server
-   - Validate data upload functionality
-3. Resume optimization work:
-   - Security enhancements for credentials
-   - Memory usage optimization
-   - Error handling improvements
+1. Move API endpoints and credentials to persistent storage and web admin interface
+2. Optimize string handling and reduce memory fragmentation
+3. Clean up legacy/commented code and consolidate duplication
+4. Continue improving error handling and recovery mechanisms
+5. Expand multi-meter support and test with more than 4 meters
 
 ## Current Implementation Status
-- Basic architecture is in place and working
-- RS485 and TCP/IP communication implemented
-- Web interface with WebSocket updates working
-- API upload functionality implemented
-- JSON document size optimized
-- Multi-meter support implemented
+- Unified Modbus handler in place and working
+- Robust initialization and connectivity routines
+- Web interface and WebSocket updates functional
+- Dual API integration (WordPress and Docker API)
+- Status LEDs provide real-time feedback
 
 ## Active Decisions
-- **JSON Document Approach**: Switched from StaticJsonDocument to DynamicJsonDocument for better memory management
-- **String Optimization**: Deferred for future to maintain code simplicity at present
-- **Optimization Priority**: Focusing on high-impact, low-effort optimizations first
+- **Unified Handler**: All meter types handled by a single function for maintainability
+- **DynamicJsonDocument**: Used for flexible memory management
+- **Status LEDs**: Used for real-time feedback on system state
 
 ## Open Questions
-- What is the expected peak load (number of meters & frequency) in production?
-- Are there specific security requirements for production deployment?
-- What metrics are most important for monitoring system health?
-- Should error handling be more aggressive (auto-restart) or passive (log-only)?
+- What is the expected production scale (meters, frequency)?
+- Are there additional security requirements for API endpoints?
+- Should all settings be user-configurable via web admin?
 
 ## Timeline Considerations
-- Focus on optimizations that don't require major architectural changes
-- Test each optimization independently
-- Document all optimizations for future maintenance
+- Prioritize optimizations that improve reliability and maintainability
+- Test all changes with live hardware
+- Document all new patterns and decisions
 
 This document will be updated regularly as development progresses and context evolves. 

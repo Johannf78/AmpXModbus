@@ -10,7 +10,7 @@
 - **Network Interface**: 
   - RS485 Version: MAX485 interface
   - TCP/IP Version: W5500 Lite Ethernet
-- **Status Indicators**: Four LEDs for power, meter connection, WiFi, and internet status
+- **Status Indicators**: Four LEDs for power, meter connection, WiFi, and internet/API status (used for real-time feedback and error indication)
 - **Power**: 3.3V operating voltage
 
 ## Dependencies
@@ -21,7 +21,7 @@
 - **ArduinoJson**: Used for API data formatting and meter register definitions
 - **WiFiManager**: For WiFi configuration (by tzapu)
 - **HTTPClient**: For API communication
-- **Preferences**: For persistent storage of settings
+- **Preferences**: For persistent storage of settings (planned for API endpoints/credentials)
 
 ## Technology Stack
 - **Language**: C/C++
@@ -34,8 +34,10 @@
 ## Technical Implementation Details
 - **Memory Usage**: 
   - DynamicJsonDocument (2KB) for meter data
-  - String objects for serial numbers and data processing
+  - String objects for serial numbers and data processing (optimization planned)
   - Multiple global variables
+- **Initialization**: Modular functions for NVS, WiFi, NTP, and Ethernet setup
+- **Status LEDs**: Used for power, meter, WiFi, and internet/API status
 
 - **Communication Configuration**:
   - RS485: Uses hardware UART with direction control on pins 16/17
@@ -47,21 +49,22 @@
   - System restart: Daily (24-hour interval)
 
 - **Multi-Meter Support**:
-  - Up to 32 meters supported
+  - Up to 4 meters currently supported (architecture allows more)
   - Auto-detection of connected meters
   - Individual meter addressing
 
 ## Observed Technical Constraints
-- **Memory Limitations**: Heavy String usage could lead to fragmentation
+- **Memory Limitations**: Heavy String usage could lead to fragmentation (planned optimization)
 - **Global State**: Many global variables increase complexity
-- **Error Recovery**: Limited mechanisms for handling communication failures
-- **Security**: Credentials stored in code rather than secure storage
-- **API Communication**: HTTP rather than HTTPS for some endpoints
+- **Error Recovery**: Improved, but further mechanisms planned
+- **Security**: Credentials and API endpoints currently hardcoded (to be moved to persistent storage)
+- **API Communication**: HTTP and HTTPS endpoints supported
 
 ## Third-Party Integration
 - **API Endpoints**:
   - AmpX Portal: https://app.ampx.co/wp-json/ampx-energy/v1/log
-  - Local development endpoint support
+  - Docker API: http://192.168.2.32:8080/api/
+  - Endpoints and credentials to be moved to persistent storage and web admin
 
 ## Build Configuration
 - **Conditional Compilation**: `MODBUS_TYPE` defines hardware variant
@@ -75,10 +78,10 @@
 - Manual verification of all functionality needed
 
 ## Optimization Opportunities
-- Memory management (String usage, global variables)
-- Security enhancements (credential storage)
-- Error handling improvements
-- Code cleanup (commented sections, redundancy)
-- Performance optimization for multi-meter support
+- Move credentials and API endpoints to persistent storage
+- Optimize string handling and memory usage
+- Further modularize error handling and recovery
+- Code cleanup (remove commented sections, consolidate duplication)
+- Expand multi-meter support
 
-This document reflects the actual observed implementation based on code review and will be updated as optimizations are implemented. 
+This document reflects the latest technical context and implementation details from the most recent code review. 

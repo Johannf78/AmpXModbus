@@ -1,7 +1,7 @@
 # System Patterns: AmpX Energy Gateway
 
 ## Architecture Overview
-The AmpX Energy Gateway follows a layered architecture pattern as observed in the existing implementation:
+The AmpX Energy Gateway now features a unified architecture for both RS485 and TCP/IP Modbus communication, with shared utility functions and modular initialization routines.
 
 ```mermaid
 flowchart TD
@@ -15,74 +15,59 @@ flowchart TD
 ## Key Components
 
 ### Communication Layer
-- Handles either RS485 or TCP/IP communication (via compile-time directives)
-- Includes functions for reading meter registers
-- Features modular design with shared utility functions
-- Separates communication logic from business logic
+- Handles both RS485 and TCP/IP communication via compile-time selection
+- Shared functions for register conversion (float, int32, int64)
+- Unified meter handler (`handlePowerMeter`) for all meter types
+- Modular initialization for NVS, WiFi, NTP, and Ethernet
 
 ### Meter Interface
-- Implements meter register definitions via JsonDocument
-- Processes different data types (float, int32, int64)
-- Manages meter identification via serial numbers
-- Structures data for further processing
+- Meter register definitions and data types managed via JSON
+- Unified processing of all meter data
+- Serial number and special register handling included
 
 ### Data Collection
-- Polls meters at regular intervals (3 seconds for web updates)
-- Uses dynamic JsonDocument for data storage
-- Detects meters automatically
-- Maintains current meter values
+- Auto-detects number of connected meters (currently up to 4, architecture supports more)
+- Polls meters at regular intervals
+- Stores data in a global DynamicJsonDocument
 
 ### Web Display
-- Serves local web interface via WebServer
-- Uses WebSockets for real-time data updates
-- Presents tabular meter data
-- Includes basic settings management
+- Local web interface with real-time updates via WebSockets
+- Status LEDs for power, meter, WiFi, and internet/API status
 
 ### API Upload
-- Formats data as JSON for API submission
-- Schedules uploads every 5 minutes
-- Posts to the remote AmpX portal
-- Includes authentication parameters
+- Two API upload methods: WordPress endpoint and Docker API
+- Custom JSON formatting for each API
+- Uploads data at scheduled intervals
 
 ## Design Patterns
 
-### Conditional Compilation
-Used for hardware variant selection (RS485 vs TCP/IP) to manage code size and isolate differences.
+### Shared Utility Functions
+- Centralized register conversion and data processing for maintainability
 
-### Observer Pattern
-WebSocket implementation acts as an observer, notifying clients about data changes.
+### Unified Handler
+- Single function for all meter types simplifies code and reduces duplication
 
-### Factory Method
-Meter data processing acts as a factory method, creating appropriate data representations based on register types.
+### Modular Initialization
+- Separate functions for NVS, WiFi, NTP, and Ethernet setup
+
+### Status Indication
+- LEDs provide real-time feedback for system state and error conditions
 
 ## Data Flow
-1. Gateway initializes hardware (RS485 or Ethernet based on compile flag)
-2. Meters are detected during initialization 
-3. Regular polling occurs in the main loop
-4. Data is processed and stored in JsonDocument
-5. WebSocket sends updates to connected clients
-6. Periodic API uploads occur on schedule
+1. System initializes hardware and network
+2. Meters are auto-detected
+3. Data is polled and processed into JSON
+4. WebSocket and API uploads occur on schedule
+5. Status LEDs indicate system health
 
 ## Observed Optimization Opportunities
-
-### Memory Management
-- Current String usage could be optimized with char arrays
-- JSON document sizing now improved with DynamicJsonDocument
-
-### Error Handling Strategy
-- Communication failures are logged but recovery is limited
-- Daily ESP restart suggests potential memory leak concerns
-- Opportunity to improve error detection and recovery
-
-### Component Coupling
-- High coupling between meter reading and data processing 
-- Global variables create implicit dependencies
-- Opportunity for better encapsulation
+- Move credentials and API endpoints to persistent storage
+- Optimize string handling to reduce memory fragmentation
+- Further modularize error handling and recovery
 
 ## Current Architecture Strengths
-- Clear separation between communication protocols
-- Effective use of conditional compilation
-- Good modularity in file organization
-- Flexible data processing for different register types
+- Unified, maintainable codebase for all meter types
+- Robust initialization and error/status indication
+- Flexible API integration
 
-This document captures observations from the actual codebase, identifying both the implemented patterns and opportunities for architectural improvements. 
+This document reflects the latest system patterns and architectural improvements from the most recent code review. 

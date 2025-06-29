@@ -64,7 +64,7 @@ Select "node32s" under the boards.
 #define MODBUS_TYPE_RS485 1
 #define MODBUS_TYPE_TCPIP 2
 //Set the required variant here:________________________________________________________
-#define MODBUS_TYPE MODBUS_TYPE_RS485
+#define MODBUS_TYPE MODBUS_TYPE_TCPIP
 
 //Include AmpX custom written libraries for Modbus
 //Saved in the D:\OneDrive\JF Data\UserData\Documents\Arduino\libraries folder
@@ -87,7 +87,7 @@ Select "node32s" under the boards.
 #define ETH_SPI_SCS   5   // CS (Chip Select), Green
 // Network settings
 byte mac[] = {0x90, 0xA2, 0xDA, 0x0E, 0x94, 0xB5};
-IPAddress pc_ip(192, 168, 2, 120);   // PC IP
+IPAddress pc_ip(192, 168, 2, 32);   // PC IP, Assign a static IP to your PC and change it here to be the same.
 IPAddress ip(192, 168, 2, 121);     // Arduino IP
 IPAddress gateway(192, 168, 2, 1);  // Network gateway
 IPAddress subnet(255, 255, 255, 0); // Subnet mask
@@ -151,7 +151,7 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 Preferences preferences;
 
 //Function prototypes, it needs to be here because it is used in the setup function.
-//one needs to add a forward declaration for this function as well, as it is define in functions.ino
+//one needs to add a forward declaration for this function as well, as it is defined in a seperate .ino file:functions.ino
 //void handlePowerMeterRS485(int meterNumber);
 //void handlePowerMeterTCPIP(int meterNumber);
 void handlePowerMeter(int meterNumber);
@@ -268,7 +268,7 @@ void loop() {
 
   // Post meter data to remote server every 5 minutes, 300000
   //TODO: JF 2025-06-08 for testing, i decreased it to 30 seconds (30000).
-  if (now - counter2 > 300000) {
+  if (now - counter2 > 30000) {
     //Post meter data to remote server
     for (int i = 1; i <= numberOfMeters; i++) {
       //postToEmonCMS(i);
