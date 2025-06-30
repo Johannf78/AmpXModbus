@@ -102,10 +102,11 @@ DynamicJsonDocument JsonDoc(2048);        //DynamicJsonDocument allocates memory
 JsonDocument MeterRegisterDefs;
 
 //Define the Status indicating LEDs pins, Commented for 
-#define LED_1_POWER 12
-#define LED_2_METER 14
-#define LED_3_WIFI 27
-#define LED_4_INTERNET 26
+#define LED_1_POWER 12  //Indicates Power is on
+#define LED_2_METER 14  //Indicates Meter is connected via Modbus
+#define LED_3_WIFI 27   //Indicates WiFi is connected
+#define LED_4_INTERNET 26 //Indicates Internet is connected
+#define LED_5_SERVER 28 //Indicates succesfull communication with the Server
 
 //FritzFamily WiFi 03368098169909319946
 
@@ -127,7 +128,8 @@ const char* api_key = "c0526f06893d1063800d3bb966927711"; //your_API_KEY
 
 //AmpX Energy Portal, Remote energy logging
 //TODO This needs to be saved in persistent memory and moved to the web admin settings page.
-const char* ampxportal_server_local = "http://192.168.2.32:8080/api/";
+//const char* ampxportal_server_local = "http://192.168.2.32:8080/api/";
+const char* ampxportal_server_local = "http://192.168.2.32:8080/api/v2/";
 const char* ampxportal_server_live = "https://app.ampx.co/";
 
 // Development flag - set to true for local development, false for production
