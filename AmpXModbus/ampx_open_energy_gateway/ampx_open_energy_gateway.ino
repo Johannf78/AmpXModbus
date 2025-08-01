@@ -130,7 +130,8 @@ const char* api_key = "c0526f06893d1063800d3bb966927711"; //your_API_KEY
 //TODO This needs to be saved in persistent memory and moved to the web admin settings page.
 //const char* ampxportal_server_local = "http://192.168.2.32:8080/api/";
 const char* ampxportal_server_local = "http://192.168.2.32:8080/api/v2/";
-const char* ampxportal_server_live = "https://app.ampx.co/";
+const char* ampxportal_server_live = "https://portal.ampx.app/api/v2/"; //old "https://app.ampx.co/api/v2/";
+
 
 // Development flag - set to true for local development, false for production
 #define USE_LOCAL_SERVER true

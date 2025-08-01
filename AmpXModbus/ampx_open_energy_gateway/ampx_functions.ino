@@ -262,7 +262,8 @@ void postToAmpXPortal2(int meterNumber = 1) {
   Serial.println("[DEBUG] JSON payload to be sent:");
   Serial.println(httpRequestData);
   Serial.println("[DEBUG] Target URL:");
-  String url = String(ampxportal_server_local);
+  String url = String(ampxportal_server_live);
+  //String url = String(ampxportal_server_local);
   Serial.println("URL: " + url);
 
   if (WiFi.status() == WL_CONNECTED) {
