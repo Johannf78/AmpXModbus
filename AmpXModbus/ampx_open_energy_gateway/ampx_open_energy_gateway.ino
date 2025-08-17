@@ -70,28 +70,31 @@ Select "node32s" under the boards.
 //Saved in the D:\OneDrive\JF Data\UserData\Documents\Arduino\libraries folder
 #if MODBUS_TYPE == MODBUS_TYPE_RS485
   #include <ampx_modbus_rs485.h>
+  //1.Define the RS485 control pins
+  #define MAX485_DE 4 //White
+  #define MAX485_RE_NEG 4
+  #define RX_PIN 16   //RO Orange
+  #define TX_PIN 17   //DI Yellow
+  //Modbus A, Positive, Green
+  //Modbus B, Negative, Bue
 #else
   #include <ampx_modbus_tcpip.h>
+
+  //2. Define Ethernet Pins, Mac and IPs
+  #define ETH_SPI_SCS   21   // CS (Chip Select), Green /Pin5 for ESP32-Wroom, Pin21 for the XIAO
+  // Network settings
+  byte mac[] = {0x90, 0xA2, 0xDA, 0x0E, 0x94, 0xB5};
+  IPAddress pc_ip(192, 168, 2, 32);   // PC IP, Assign a static IP to your PC and change it here to be the same.
+  IPAddress ip(192, 168, 2, 121);     // Arduino IP
+  IPAddress gateway(192, 168, 2, 1);  // Network gateway
+  IPAddress subnet(255, 255, 255, 0); // Subnet mask
+  IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
+
 #endif
 
-//1.Define the RS485 control pins
-#define MAX485_DE 4 //White
-#define MAX485_RE_NEG 4
-#define RX_PIN 16   //RO Orange
-#define TX_PIN 17   //DI Yellow
-//Modbus A, Positive, Green
-//Modbus B, Negative, Bue
 
 
-//2. Define Ethernet Pins, Mac and IPs
-#define ETH_SPI_SCS   5   // CS (Chip Select), Green
-// Network settings
-byte mac[] = {0x90, 0xA2, 0xDA, 0x0E, 0x94, 0xB5};
-IPAddress pc_ip(192, 168, 2, 32);   // PC IP, Assign a static IP to your PC and change it here to be the same.
-IPAddress ip(192, 168, 2, 121);     // Arduino IP
-IPAddress gateway(192, 168, 2, 1);  // Network gateway
-IPAddress subnet(255, 255, 255, 0); // Subnet mask
-IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
+
 
 
 //The JsonDocument is used to send data to the websocket....
