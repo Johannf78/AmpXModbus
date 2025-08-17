@@ -1,3 +1,5 @@
+
+
 void initWiFi() {
   
   WiFi.setHostname("AmpX-Energy-Gateway");
@@ -23,13 +25,14 @@ void initWiFi() {
   //here  "AutoConnectAP"
   //and goes into a blocking loop awaiting configuration
   if (!wifiManager.autoConnect("AmpX-Energy-Gateway-AP", "")) {
-    Serial.println("failed to connect and hit timeout");
+    //Serial.println("failed to connect and hit timeout");
     //reset and try again, or maybe put it to deep sleep
     ESP.restart();
     delay(1000);
   }
   //Indicate that Wifi is successfully connected by putting on LED 3
   digitalWrite(LED_3_WIFI, HIGH);
+  /*
   Serial.println("");
   Serial.println("Connected to Wi-Fi");
   Serial.print("IP address: ");
@@ -39,6 +42,7 @@ void initWiFi() {
   Serial.print("WiFi.getHostname: ");
   Serial.println(WiFi.getHostname());
   Serial.println("");
+*/
 
   /*
   // OTA setup
@@ -84,23 +88,23 @@ void initWiFi() {
 
 #if MODBUS_TYPE == MODBUS_TYPE_TCPIP
   void initEthernet(){
-    Serial.println("Starting Ethernet connection...");
+    //Serial.println("Starting Ethernet connection...");
 
     //Set the CS pin, required for ESP32 as the arduino default is different
     Ethernet.init(ETH_SPI_SCS); 
 
     
-    Serial.println("\nStarting Custom Modbus TCP Implementation");
+    //Serial.println("\nStarting Custom Modbus TCP Implementation");
     
     // Initialize ethernet
-    Serial.println("Initializing Ethernet...");
+    //Serial.println("Initializing Ethernet...");
     Ethernet.begin(mac, ip, gateway, subnet);
     
     // Wait for Ethernet to be ready
     delay(2000);
 
     //Hardware check
-    Serial.println("Checking Ethernet hardware...");
+    //Serial.println("Checking Ethernet hardware...");
     if (Ethernet.hardwareStatus() == EthernetNoHardware) {
       Serial.println("ERROR: No Ethernet hardware detected!");
       return;

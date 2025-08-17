@@ -15,6 +15,10 @@ Then install the board manager.
 Now select the port and then 
 Select "node32s" under the boards.
 
+//OTA Update has been disabled to reduce file size.
+Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)" or "Huge APP (3MB No OTA/1MB SPIFFS)" if you don't need OTA.
+
+
 */
 //Required to communicate with the RS485 Controller.
 #include <HardwareSerial.h>
@@ -81,7 +85,7 @@ Select "node32s" under the boards.
   #include <ampx_modbus_tcpip.h>
 
   //2. Define Ethernet Pins, Mac and IPs
-  #define ETH_SPI_SCS   21   // CS (Chip Select), Green /Pin5 for ESP32-Wroom, Pin21 for the XIAO
+  #define ETH_SPI_SCS   5   // CS (Chip Select), Green /Pin5 for ESP32-Wroom, Pin21 for the XIAO
   // Network settings
   byte mac[] = {0x90, 0xA2, 0xDA, 0x0E, 0x94, 0xB5};
   IPAddress pc_ip(192, 168, 2, 32);   // PC IP, Assign a static IP to your PC and change it here to be the same.
