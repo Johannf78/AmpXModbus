@@ -1,7 +1,13 @@
 /*
-the file "ampx_modbus_functions.ino" should be in the same directory as this .ino file.
-It is automatically included and merged with this file.
-This just seperates all the modbus functions and make this file easier to read.
+The following .ino files should be in the same directory as this main .ino file (AmpX-Energy-Gateway.ino).
+  ampx_functions.ino
+  ampx_functions_modbus.ino
+  ampx_functions_network.ino
+  ampx_functions_web.ino
+
+These files are automatically included and merged with this main .ino file.
+This just seperates all the functions and make this file easier to read.
+
 
 For The ESP32 Node32s board do the following:
 Go to File -> Preferences.
@@ -50,12 +56,18 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 #include "meter_registers.h"
 
 //Unique Gateway ID for each gateway manufactured. To be used when adding it to a the portal under a specific user.
-//Format: 25 02 0001 Year, Month, increment.
+//This is set when manufactured and will be unique for each gateway.
+//Format: 100001 increment.
 //TODO: JF 2025-05-05 This needs to be moved to the permanent settings and web page with admin settings created.
 #define AMPX_GATEWAY_ID 100001
 
-#define DEBUG 0
-#if DEBUG == 0
+
+
+//This is an easy way to exclude all serial.print commands from production code to reduce the file size.
+//Change this varialbe to enable or disable debugging
+#define DEBUG 1
+
+#if DEBUG == 1
   #define debug(x) Serial.print(x)
   #define debugln(x) Serial.println(x)
 #else
@@ -67,35 +79,53 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 //working with mobus over TCP/IP, this is setup here and used depeding on what is needed.
 #define MODBUS_TYPE_RS485 1
 #define MODBUS_TYPE_TCPIP 2
-//Set the required variant here:________________________________________________________
+//Set the required Modbus type variant here to either RS485 or TCPIP
+//In other words, change this depending on if the board is for RS485 or for TCPIP
 #define MODBUS_TYPE MODBUS_TYPE_TCPIP
+
 
 //Include AmpX custom written libraries for Modbus
 //Saved in the D:\OneDrive\JF Data\UserData\Documents\Arduino\libraries folder
-#if MODBUS_TYPE == MODBUS_TYPE_TCPIP
+#if MODBUS_TYPE == MODBUS_TYPE_RS485
+  
+  //Custom written AmpX Modbus library for RS485
+  //Saved in libary folder. On my pc: D:\OneDrive\JF Data\UserData\Documents\Arduino\libraries\ampx_modbus_rs485\src\ampx_modbus_rs485.cpp  
   #include <ampx_modbus_rs485.h>
+
+  //1.Define the RS485 control pins
+  #define MAX485_DE 4 //White
+  #define MAX485_RE_NEG 4
+  #define RX_PIN 16   //RO Orange
+  #define TX_PIN 17   //DI Yellow
+  //Modbus A, Positive, Green
+  //Modbus B, Negative, Blue
+
 #else
+
+  //Custom written AmpX Modbus library for TCPIP
+  //Saved in libary folder. On my pc: D:\OneDrive\JF Data\UserData\Documents\Arduino\libraries\ampx_modbus_tcpip\src\ampx_modbus_tcpip.cpp  
   #include <ampx_modbus_tcpip.h>
+
+  //Define Ethernet Pins
+  //SPI Interface Pin definitions for XIAO AND ESP32 WROOM 32U - Node32S, For W5500 and W5500-Lite
+                                  //XIAO      WROOM
+  #define ETH_SPI_SCS_PIN     5   //21,D6     5     // CS (Chip Select), nSS (On Datasheet) - Green wire - GPIO0 (any GPIO works for CS)
+  //#define ETH_SPI_SCK_PIN   8   //8,D8      18    // SCK (SCLK), Clock - Yellow wire (hardware SPI)
+  //#define ETH_SPI_MISO_PIN  9   //9,D9      19    // (MISO) - Orange wire (hardware SPI)
+  //#define ETH_SPI_MOSI_PIN  10  //10,D10    23    // (MOSI) - Blue wire  (hardware SPI)
+  //Red     VCC   3V
+  //Black   GND   On row two for ground
+
+  //Define Ethernet Settings, Mac and IPs
+  byte mac[] = {0x90, 0xA2, 0xDA, 0x0E, 0x94, 0xB5};
+  IPAddress pc_ip(192, 168, 2, 32);   // PC IP, Assign a static IP to your PC and change it here to be the same.
+  IPAddress ip(192, 168, 2, 121);     // Arduino IP
+  IPAddress gateway(192, 168, 2, 1);  // Network gateway
+  IPAddress subnet(255, 255, 255, 0); // Subnet mask
+  IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
+
 #endif
 
-//1.Define the RS485 control pins
-#define MAX485_DE 4 //White
-#define MAX485_RE_NEG 4
-#define RX_PIN 16   //RO Orange
-#define TX_PIN 17   //DI Yellow
-//Modbus A, Positive, Green
-//Modbus B, Negative, Bue
-
-
-//2. Define Ethernet Pins, Mac and IPs
-#define ETH_SPI_SCS   5   // CS (Chip Select), Green
-// Network settings
-byte mac[] = {0x90, 0xA2, 0xDA, 0x0E, 0x94, 0xB5};
-IPAddress pc_ip(192, 168, 2, 32);   // PC IP, Assign a static IP to your PC and change it here to be the same.
-IPAddress ip(192, 168, 2, 121);     // Arduino IP
-IPAddress gateway(192, 168, 2, 1);  // Network gateway
-IPAddress subnet(255, 255, 255, 0); // Subnet mask
-IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
 
 
 //The JsonDocument is used to send data to the websocket....
@@ -105,12 +135,12 @@ DynamicJsonDocument JsonDoc(2048);        //DynamicJsonDocument allocates memory
 //JSON document for meter register definitions
 JsonDocument MeterRegisterDefs;
 
-//Define the Status indicating LEDs pins, Commented for 
-#define LED_1_POWER 12  //Indicates Power is on
-#define LED_2_METER 14  //Indicates Meter is connected via Modbus
-#define LED_3_WIFI 27   //Indicates WiFi is connected
-#define LED_4_INTERNET 26 //Indicates Internet is connected
-#define LED_5_SERVER 28 //Indicates succesfull communication with the Server
+//Define the status indicating LEDs pins
+#define LED_1_POWER     12 //Indicates Power is on
+#define LED_2_METER     14 //Indicates Meter is connected via Modbus
+#define LED_3_WIFI      27 //Indicates WiFi is connected
+#define LED_4_INTERNET  26 //Indicates Internet is connected
+#define LED_5_SERVER    28 //Indicates succesfull communication with the Server
 
 //FritzFamily WiFi 03368098169909319946
 
@@ -170,12 +200,6 @@ void initNTP();
 String getCurrentTimestamp();
 
 void setup() {
-  Serial.begin(9600); // Debug serial
-    while (!Serial) {
-    ; // Wait for serial port to connect
-  }
-  Serial.println("Begin setup");
-  
   // initialize LED status pins as outputs.
   pinMode(LED_1_POWER, OUTPUT);
   pinMode(LED_2_METER, OUTPUT);
@@ -185,28 +209,24 @@ void setup() {
   //Indicate that the power is on with a LED
   digitalWrite(LED_1_POWER, HIGH);
 
-  // Debugging information
-  Serial.print("AMPX_GATEWAY_ID: ");
-  Serial.println(AMPX_GATEWAY_ID);
-
-  /*
-  if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
-    // Initialize RS485 with Serial2
-    //Serial 2 for ESP32Wroom, Serial 1 for XIAO
-    rs485_init(&Serial1, RX_PIN, TX_PIN);
-    Serial.println("RS485 Modbus initialized");
-  } else {
-    // MODBUS_TYPE = MODBUS_TYPE_TCPIP
-    //JF: Commented to reduce file size, uncomment when using tcpip
-    initEthernet();
+  Serial.begin(9600); // Debug serial
+  while (!Serial) {
+    delay(10); // Wait for serial port to become ready.
   }
-  */
+  delay(1200); //Wait some more for the serial port to become ready...
+  debugln("Serial port ready. Begin setup...");
+  
+  // Debuging information
+  debug("AMPX_GATEWAY_ID: ");
+  debugln(AMPX_GATEWAY_ID);
 
+  //Depending on the Modbus type set, initialise either RS485 or TCPIP
   #if MODBUS_TYPE == MODBUS_TYPE_RS485
-    rs485_init(&Serial1, RX_PIN, TX_PIN);
-    Serial.println("RS485 Modbus initialized");
+    initRS485(&Serial1, RX_PIN, TX_PIN);
+    debugln("RS485 Modbus initialized");
   #else
     initEthernet();
+    debugln("TCPIP Modbus initialized");
   #endif
   
   Serial.println("Setup complete. Starting communication...");
@@ -216,6 +236,9 @@ void setup() {
 
   // Initialize WiFi
   initWiFi(); //Program will not continue unless WiFi is connected..
+
+  //Do Over the air update for firmware updates
+  initOTA();
 
   // Initialize NTP time synchronization (must be after WiFi)
   initNTP();
