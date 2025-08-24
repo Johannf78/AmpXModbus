@@ -2,6 +2,8 @@
 
 void initWiFi() {
   
+  debugln("Inside initWiFi function. Top of function");
+  
   WiFi.setHostname("AmpX-Energy-Gateway");
 
   // Connect to the Wi-Fi network, this is now handeled by the WiFi Mangager library...
@@ -25,24 +27,29 @@ void initWiFi() {
   //here  "AutoConnectAP"
   //and goes into a blocking loop awaiting configuration
   if (!wifiManager.autoConnect("AmpX-Energy-Gateway-AP", "")) {
-    //Serial.println("failed to connect and hit timeout");
+    debugln("Failed to connect and hit timeout...");
+    //debugln("Trying again in one second");
     //reset and try again, or maybe put it to deep sleep
-    ESP.restart();
+    //ESP.restart();
     delay(1000);
   }
   //Indicate that Wifi is successfully connected by putting on LED 3
   digitalWrite(LED_3_WIFI, HIGH);
-  /*
-  Serial.println("");
-  Serial.println("Connected to Wi-Fi");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-  Serial.print("Signal strength: ");
-  Serial.println(WiFi.RSSI());
-  Serial.print("WiFi.getHostname: ");
-  Serial.println(WiFi.getHostname());
-  Serial.println("");
-*/
 
+  debugln("");
+  debugln("Connected to Wi-Fi");
+  
+  debug("IP address: ");
+  debugln(WiFi.localIP());
+  
+  debug("Signal strength: ");
+  debugln(WiFi.RSSI());
+
+  debug("WiFi.getHostname: ");
+  debugln(WiFi.getHostname());
+
+  debugln("");
+
+  debugln("Inside initWiFi function. End of function");
 
 }

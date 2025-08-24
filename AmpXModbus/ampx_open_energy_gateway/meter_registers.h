@@ -1,8 +1,20 @@
-
 #ifndef METER_REGISTERS_H
 #define METER_REGISTERS_H
 
 #include <ArduinoJson.h>
+
+//This is an easy way to exclude all serial.print commands from production code to reduce the file size.
+//Change this varialbe to enable or disable debugging
+#define DEBUG 1
+
+#if DEBUG == 1
+  #define debug(x) Serial.print(x)
+  #define debugln(x) Serial.println(x)
+#else
+  #define debug(x)
+  #define debugln(x)
+#endif
+
 
 // Define data type constants
 const int dataTypeInt32 = 1;
@@ -15,6 +27,8 @@ extern JsonDocument MeterRegisterDefs;
 // This function sets up the meter register definitions in a JSON document
 void setupMeterRegisters() {
   // Format: [register_number, number_of_registers, data_type, friendly_name, json_key]
+
+  debugln("Inside setupMeterRegisters function. Top of function");
   
   // Serial Number
   JsonArray serialNumber = MeterRegisterDefs.createNestedArray("serialNumber");
@@ -135,10 +149,11 @@ void setupMeterRegisters() {
 
   // Print to Serial with pretty formatting
  
-  //debugln("MeterRegisterDefs Json.");
-  //serializeJsonPretty(MeterRegisterDefs, Serial);
-  //debugln(""); // Add a newline at the end
-
+  debugln("MeterRegisterDefs Json.");
+  serializeJsonPretty(MeterRegisterDefs, Serial);
+  
+  debugln("Inside setupMeterRegisters function. End of function");
+  debugln(""); // Add a newline at the end
 }
 
 #endif // METER_REGISTERS_H 

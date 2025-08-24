@@ -231,9 +231,6 @@ void setup() {
   
   Serial.println("Setup complete. Starting communication...");
   
-  // Initialize meter register definitions
-  setupMeterRegisters();
-
   // Initialize WiFi
   initWiFi(); //Program will not continue unless WiFi is connected..
 
@@ -248,6 +245,9 @@ void setup() {
 
   //Initialise the local web server.
   initServer();
+
+  // Initialize meter register definitions
+  setupMeterRegisters();
 
   //Detect number of meters and set global variable, numberOfMeters.
   detectNumberOfMeters();
@@ -309,8 +309,8 @@ void loop() {
   //Reboot every 24 hours to ensure it keeps working, 86400000
   if (now - counter3 > 86400000) {
     //Reboot the ESP32
-    ESP.restart();
-    //counter3 = now;
+    //ESP.restart();
+    counter3 = now;
   }
 
 
