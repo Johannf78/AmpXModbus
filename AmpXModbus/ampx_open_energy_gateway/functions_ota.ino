@@ -1,7 +1,8 @@
 void initOTA(){
-  delay(1);
 
   /*
+  //JF Disabled for now to try and save space.
+  
   // OTA setup
   ArduinoOTA.onStart([]() {
     String type;

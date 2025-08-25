@@ -28,22 +28,32 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 */
 //Required to communicate with the RS485 Controller.
 #include <HardwareSerial.h>
+
 //Used to connect to the local WiFi network, Built-in library that comes with the ESP32 Arduino core
 #include <WiFi.h>
+
 //Install the library by tzapu, https://github.com/tzapu/WiFiManager, https://www.youtube.com/watch?v=Errh7LEEug0
 #include <WiFiManager.h> //This is used to dymanically configure the wifi connection .
+
 //Creates a web server and serves a webpage with all the meter readings.
 #include <WebServer.h>
-#include <HTTPClient.h>
-//Search for Arduino Websockets, install the one by Markus Sattler
-#include <WebSocketsServer.h>
-//Search for ArduinoJson, install the one by Benoit Blanchon
-#include <ArduinoJson.h>
-//Time library for NTP synchronization
-#include <time.h>
-//Arduion Over the Air update functionality
+
+//Arduion Over the Air update functionality, commented out for now to try and save space
 //#include <ArduinoOTA.h>
 //#include <Update.h>
+
+//Time library for NTP synchronization
+#include <time.h>
+
+// built-in ESP32 library that provides HTTP client functionality for making HTTP requests to web servers and APIs.
+#include <HTTPClient.h>
+
+//Search for Arduino Websockets, install the one by Markus Sattler
+#include <WebSocketsServer.h>
+
+//Search for ArduinoJson, install the one by Benoit Blanchon
+#include <ArduinoJson.h>
+
 //Install the one by Vlodomyr Shymanskyy, https://github.com/vshymanskyy/Preferences
 #include <Preferences.h>
 
