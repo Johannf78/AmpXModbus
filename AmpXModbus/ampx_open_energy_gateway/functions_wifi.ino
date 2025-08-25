@@ -17,15 +17,14 @@ void initWiFi() {
 
   WiFiManager wifiManager;
 
-  // If you've previously connected to your WiFi with this ESP32,
-  // WiFi manager will more than likely not do anything.
-  // Uncomment this if you want to force it to delete your old WiFi details.
+  /*If you've previously connected to your WiFi with this ESP32,
+  WiFi manager will more than likely not do anything.
+  Uncomment this if you want to force it to delete your old WiFi details.*/
   //wifiManager.resetSettings();
 
-  //Tries to connect to last known WiFi details
-  //if it does not connect it starts an access point with the specified name
-  //here  "AutoConnectAP"
-  //and goes into a blocking loop awaiting configuration
+  /*Tries to connect to last known WiFi details
+  if it does not connect it starts an access point with the specified name
+  here  "AutoConnectAP"and goes into a blocking loop awaiting configuration*/
   if (!wifiManager.autoConnect("AmpX-Energy-Gateway-AP", "")) {
     debugln("Failed to connect and hit timeout...");
     //reset and try again, or maybe put it to deep sleep
@@ -48,8 +47,7 @@ void initWiFi() {
   debug("WiFi.getHostname: ");
   debugln(WiFi.getHostname());
 
-  debugln("");
-
   debugln("Inside initWiFi function. End of function");
+  debugln("");
 
 }

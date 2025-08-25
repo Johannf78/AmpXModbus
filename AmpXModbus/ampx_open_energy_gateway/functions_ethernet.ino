@@ -28,7 +28,8 @@
     
     //Check if cable is connected
     if (Ethernet.linkStatus() == LinkOFF) {
-      debugln("Link is OFF. Check cable connection.");
+      debugln("Link is OFF. Check LAN cable connection.");
+      return;
     }
     else {
       debugln("Link is ON. Cable is connected. Ready to go!");

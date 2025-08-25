@@ -28,11 +28,11 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 */
 //Required to communicate with the RS485 Controller.
 #include <HardwareSerial.h>
-//Connect to the local WiFi network
+//Used to connect to the local WiFi network, Built-in library that comes with the ESP32 Arduino core
 #include <WiFi.h>
-//Creates a web server and serves a webpage with all the meter readings.
 //Install the library by tzapu, https://github.com/tzapu/WiFiManager, https://www.youtube.com/watch?v=Errh7LEEug0
 #include <WiFiManager.h> //This is used to dymanically configure the wifi connection .
+//Creates a web server and serves a webpage with all the meter readings.
 #include <WebServer.h>
 #include <HTTPClient.h>
 //Search for Arduino Websockets, install the one by Markus Sattler
@@ -189,8 +189,6 @@ Preferences preferences;
 
 //Function prototypes, it needs to be here because it is used in the setup function.
 //one needs to add a forward declaration for this function as well, as it is defined in a seperate .ino file:functions.ino
-//void handlePowerMeterRS485(int meterNumber);
-//void handlePowerMeterTCPIP(int meterNumber);
 void handlePowerMeter(int meterNumber);
 void postToAmpXPortal2(int meterNumber);
 void setupMeterRegisters();
@@ -279,19 +277,36 @@ void loop() {
   static unsigned long counter3 = 0;
   unsigned long now = millis();
 
-  // Read the parameters every 3 seconds
+  //Test meter connection and read the parameters every 3 seconds
   if (now - counter1 > 3000) {
-    for (int i = 1; i <= numberOfMeters; i++) {
-      /*
-      if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
-        handlePowerMeterRS485(i); //Pass the meter number to the function. Updtate the values on the local web page.
-      } else { // MODBUS_TYPE = MODBUS_TYPE_TCPIP
-        handlePowerMeterTCPIP(i); //Pass the meter number to the function. Updtate the values on the local web page.
-      }*/
-       //JF: New fuction to handle both RS485 and TCPIP
-      handlePowerMeter(i);
+    //Test if the meter is still connected.
+    if (modbus_test_connection()) {
+      debugln("Connection test successful! We are able to communicate with the meter with modbus over TCPIP!");
+      //Turn on LED 2 to indicate successful connection to energy meter.
+      digitalWrite(LED_2_METER, HIGH);
+
+      //Read the parameters from the meter and update the local web page.
+      for (int i = 1; i <= numberOfMeters; i++) {
+        //JF: New fuction to handle both RS485 and TCPIP
+        handlePowerMeter(i);
+      }
+      handleWebSocket();
+  
+    } else {
+      debugln("Connection test failed!");
+      //Turn off LED 2 to indicate unsuccessful connection to energy meter.
+      digitalWrite(LED_2_METER, LOW);  
+      //Try and reconnect...
+      //Depending on the Modbus type set, initialise either RS485 or TCPIP
+      #if MODBUS_TYPE == MODBUS_TYPE_RS485
+        initRS485(&Serial1, RX_PIN, TX_PIN);
+        debugln("RS485 Modbus initialized");
+      #else
+        initEthernet();
+        debugln("TCPIP Modbus initialized");
+      #endif
     }
-    handleWebSocket();
+
     counter1 = now;
   }
 
