@@ -28,10 +28,10 @@ void initWiFi() {
   //and goes into a blocking loop awaiting configuration
   if (!wifiManager.autoConnect("AmpX-Energy-Gateway-AP", "")) {
     debugln("Failed to connect and hit timeout...");
-    //debugln("Trying again in one second");
     //reset and try again, or maybe put it to deep sleep
-    //ESP.restart();
+    ESP.restart();
     delay(1000);
+    //TODO: JF: Fix endless loop if no signal...
   }
   //Indicate that Wifi is successfully connected by putting on LED 3
   digitalWrite(LED_3_WIFI, HIGH);
