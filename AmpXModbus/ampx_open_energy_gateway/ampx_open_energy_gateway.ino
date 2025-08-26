@@ -45,6 +45,10 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 //Time library for NTP synchronization
 #include <time.h>
 
+//Install the one by Vlodomyr Shymanskyy, https://github.com/vshymanskyy/Preferences
+//NVS  Non-Volatile Storage (Local Permanent Storage)
+#include <Preferences.h>
+
 // built-in ESP32 library that provides HTTP client functionality for making HTTP requests to web servers and APIs.
 #include <HTTPClient.h>
 
@@ -54,8 +58,7 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 //Search for ArduinoJson, install the one by Benoit Blanchon
 #include <ArduinoJson.h>
 
-//Install the one by Vlodomyr Shymanskyy, https://github.com/vshymanskyy/Preferences
-#include <Preferences.h>
+
 
 
 //The HTML code is stored in a seperate file, this makes the code easier to read.
@@ -160,6 +163,8 @@ JsonDocument MeterRegisterDefs;
 //const int dataTypeInt64 = 2;
 //const int dataTypeFloat = 3;
 
+//NVS  Non-Volatile Storage (Local Permanent Storage)
+Preferences preferences;
 
 const char* firmwareURL = "https://ampx.co/downloads/ampx_open_energy_gateway.ino.bin";
 bool readSerial = false;
@@ -195,7 +200,7 @@ int maxNumberOfMeters = 4;
 WebServer server(HTTP);
 WebSocketsServer webSocket = WebSocketsServer(81);
 
-Preferences preferences;
+
 
 //Function prototypes, it needs to be here because it is used in the setup function.
 //one needs to add a forward declaration for this function as well, as it is defined in a seperate .ino file:functions.ino

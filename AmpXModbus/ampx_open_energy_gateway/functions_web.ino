@@ -1,4 +1,4 @@
-
+//Initialise the server and websocket
 void initServer() {
   server.on("/", handleRoot);
   // Commented out to reduce space
@@ -11,8 +11,7 @@ void initServer() {
   webSocket.begin();
 }
 
-
-
+//Handle the root webpage
 void handleRoot() {
   //String html = "<h1>AmpX Open Energy Gateway</h1>";
   //String vol = "<h1>Voltage on L1: " + String(voltage_on_L1, 2) + "(V)</h1>";
@@ -41,7 +40,7 @@ void handleRoot() {
   server.send(200, "text/html", webpage);
 }
 
-
+//Handle the settings webpage
 void handleSettings()
 {
   String page = webpage_settings;
@@ -76,6 +75,7 @@ void handleSettings()
   server.send(200, "text/html", page);
 }
 
+//Handle the admin webpage
 void handleAdmin()
 {
   //Handle the admin page. Change the gateway ID, Server and API key, and other settings only ment for admin.
@@ -97,69 +97,3 @@ void handleWebSocket() {
   //serializeJsonPretty(JsonDoc, Serial);
 }
 
-void postToEmonCMS(int meterNumber = 1) { 
-  //old postToRemoteServer
-  String meterPrefix = "m" + String(meterNumber) + "_";
-
-/* for testing 
-  int test_power1 = random(1000);
-  int test_power2 = random(1000);
-  int test_power3 = random(1000);
-  int test_powert = random(1000);
-
-  String valuesString ="";
-  valuesString = "power1:" + String(test_power1);
-  valuesString += ",power2:" + String(test_power2);
-  valuesString += ",power3:" + String(test_power3);
-  valuesString += ",powert:" + String(test_powert);
-//  Serial.println("valuesString:  " + valuesString);
-*/
-
-  String valuesString2 ="";
-  valuesString2 = "power1:" + String(JsonDoc[meterPrefix + "active_power_L1"]);
-  valuesString2 += ",power2:" + String(JsonDoc[meterPrefix + "active_power_L2"]);
-  valuesString2 += ",power3:" + String(JsonDoc[meterPrefix + "active_power_L3"]);
-  valuesString2 += ",powert:" + String(JsonDoc[meterPrefix + "active_power_tot"]);
- // Serial.println("valuesString2:  " + valuesString2);
-
-  //Add energy imported values
-  valuesString2 += ",energy1:" + String(JsonDoc[meterPrefix + "active_energy_imported_L1"]);
-  valuesString2 += ",energy2:" + String(JsonDoc[meterPrefix + "active_energy_imported_L2"]);
-  valuesString2 += ",energy3:" + String(JsonDoc[meterPrefix + "active_energy_imported_L3"]);
-  valuesString2 += ",energyt:" + String(JsonDoc[meterPrefix + "active_energy_imported_tot"]);
-  Serial.println("valuesString2:  " + valuesString2);
-
-
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    String url = "";
-    url = String(emoncms_server);
-    url += "/input/post?node=" + String(meterNumber) + "&json={";
-    //Test with fixed values
-    //url += "power1:100,power2:200,power3:300";
-    //Test with random values
-    //url += valuesString;
-    //Test with actual values
-    url += valuesString2;
-    url += "}&apikey=" + String(api_key);
-    //Serial.println(url);
-
-    
-
-    http.begin(url);
-    int httpResponseCode = http.GET();
-    if (httpResponseCode > 0) {
-      String response = http.getString();
-      //Serial.println(httpResponseCode);
-      Serial.print("Https client Response: ");
-      Serial.println(response);
-    } else {
-      Serial.print("Error on sending POST: ");
-      Serial.println(httpResponseCode);
-      //Responce code -1 means no internet access, data ok?
-    }
-    http.end();
-  } else {
-    Serial.println("WiFi Disconnected");
-  }
-}

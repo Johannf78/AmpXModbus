@@ -22,6 +22,13 @@ void initWiFi() {
   Uncomment this if you want to force it to delete your old WiFi details.*/
   //wifiManager.resetSettings();
 
+  //Non blocking mode
+  //wifiManager.setConfigPortalBlocking(true);
+
+  //Set the timeout 3 minutes or more to give the WiFi router chance to startup...
+  //This prevents it going into AP mode before it can connect.
+  //wifiManager.setConfigPortalTimeout(180);
+
   /*Tries to connect to last known WiFi details
   if it does not connect it starts an access point with the specified name
   here  "AutoConnectAP"and goes into a blocking loop awaiting configuration*/
