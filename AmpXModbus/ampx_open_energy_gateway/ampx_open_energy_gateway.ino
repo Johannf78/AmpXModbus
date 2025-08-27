@@ -35,9 +35,6 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 //Install the library by tzapu, https://github.com/tzapu/WiFiManager, https://www.youtube.com/watch?v=Errh7LEEug0
 #include <WiFiManager.h> //This is used to dymanically configure the wifi connection .
 
-//Creates a web server and serves a webpage with all the meter readings.
-#include <WebServer.h>
-
 //Arduion Over the Air update functionality, commented out for now to try and save space
 //#include <ArduinoOTA.h>
 //#include <Update.h>
@@ -49,8 +46,8 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 //NVS  Non-Volatile Storage (Local Permanent Storage)
 #include <Preferences.h>
 
-// built-in ESP32 library that provides HTTP client functionality for making HTTP requests to web servers and APIs.
-#include <HTTPClient.h>
+//Creates a web server and serves a webpage with all the meter readings and settings.
+#include <WebServer.h>
 
 //Search for Arduino Websockets, install the one by Markus Sattler
 #include <WebSocketsServer.h>
@@ -58,14 +55,17 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 //Search for ArduinoJson, install the one by Benoit Blanchon
 #include <ArduinoJson.h>
 
+//Built-in ESP32 library that provides HTTP client functionality for making HTTP requests to web servers and APIs.
+#include <HTTPClient.h>
 
 
 
-//The HTML code is stored in a seperate file, this makes the code easier to read.
+//The HTML code for the webpages are stored in a seperate file, this makes the code easier to read.
 #include "webpage.h"
 #include "web_settings.h"
 #include "web_admin.h"
-//Define the meter registers and datatypes here
+
+//Define the meter registers and datatypes here in json format.
 #include "meter_registers.h"
 
 //Unique Gateway ID for each gateway manufactured. To be used when adding it to a the portal under a specific user.
@@ -140,22 +140,13 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 #endif
 
 
-
-//The JsonDocument is used to send data to the websocket....
-//StaticJsonDocument<512> JsonDoc;          //Define optimized JSON documents with minimum required size. StaticJsonDocument allocates memory on the stack (fixed at compile time)
-DynamicJsonDocument JsonDoc(2048);        //DynamicJsonDocument allocates memory on the heap (dynamic at runtime)
-
-//JSON document for meter register definitions
-JsonDocument MeterRegisterDefs;
-
 //Define the status indicating LEDs pins
 #define LED_1_POWER     12 //Indicates Power is on
 #define LED_2_METER     14 //Indicates Meter is connected via Modbus
 #define LED_3_WIFI      27 //Indicates WiFi is connected
 #define LED_4_INTERNET  26 //Indicates Internet is connected
-#define LED_5_SERVER    28 //Indicates succesfull communication with the Server
+#define LED_5_SERVER    25 //Indicates succesfull communication with the Server
 
-//FritzFamily WiFi 03368098169909319946
 
 //Constant data types, used in the processRegisters function.
 //These are now defined in meter_registers.h
@@ -166,6 +157,32 @@ JsonDocument MeterRegisterDefs;
 //NVS  Non-Volatile Storage (Local Permanent Storage)
 Preferences preferences;
 
+//Web server and websocket
+#define HTTP 80
+WebServer server(HTTP);
+WebSocketsServer webSocket = WebSocketsServer(81);
+
+
+//TODO: Improve this code use an array and do not use strings.
+String m1_serial_number = "";  // Meter one serial number
+String m2_serial_number = "";
+String m3_serial_number = "";
+String m4_serial_number = "";  
+
+
+int numberOfMeters = 0;  // Number of meters connected, this will automatically be updated based on the number of meters detected
+int maxNumberOfMeters = 4;
+
+
+//The JsonDocument is used to send data to the websocket....
+//StaticJsonDocument<512> JsonDoc;          //Define optimized JSON documents with minimum required size. StaticJsonDocument allocates memory on the stack (fixed at compile time)
+DynamicJsonDocument JsonDoc(2048);        //DynamicJsonDocument allocates memory on the heap (dynamic at runtime)
+
+//JSON document for meter register definitions
+JsonDocument MeterRegisterDefs;
+
+
+//Firmware URL to use to update the firmware via OTA
 const char* firmwareURL = "https://ampx.co/downloads/ampx_open_energy_gateway.ino.bin";
 bool readSerial = false;
 
@@ -182,24 +199,9 @@ const char* ampxportal_server_local = "http://192.168.2.32:8080/api/v2/";
 const char* ampxportal_server_live = "https://portal.ampx.app/api/v2/"; //old "https://app.ampx.co/api/v2/";
 
 
-// Development flag - set to true for local development, false for production
+// Which API to use local or live? - set to true for local development, false for live
+//TODO: 2025-08-26 This needs to be moved to the preferences and web admin settings page.
 #define USE_LOCAL_SERVER true
-
-
-//TODO: Improve this code use an array and do not use strings.
-String m1_serial_number = "";  // Meter one serial number
-String m2_serial_number = "";
-String m3_serial_number = "";
-String m4_serial_number = "";  
-
-
-int numberOfMeters = 0;  // Number of meters connected, this will automatically be updated based on the number of meters detected
-int maxNumberOfMeters = 4;
-
-#define HTTP 80
-WebServer server(HTTP);
-WebSocketsServer webSocket = WebSocketsServer(81);
-
 
 
 //Function prototypes, it needs to be here because it is used in the setup function.
@@ -253,7 +255,7 @@ void setup() {
   // Initialize NTP time synchronization (must be after WiFi)
   initNTP();
 
-  // Initialize NVS (Local Permanent Storage)
+  // Initialize NVS  Non-Volatile Storage (Local Permanent Storage)
   initNvs();  
 
   //Initialise the local web server.
@@ -267,18 +269,13 @@ void setup() {
 
   //Do the initial reading of the meters and update of the webpage, then repeat after 3 seconds in the loop.
   for (int i = 1; i <= numberOfMeters; i++) {
-    /*
-    if (MODBUS_TYPE == MODBUS_TYPE_RS485) {
-      handlePowerMeterRS485(i); //Pass the meter number to the function. Updtate the values on the local web page.
-    } else { // MODBUS_TYPE = MODBUS_TYPE_TCPIP
-      handlePowerMeterTCPIP(i); //Pass the meter number to the function. Updtate the values on the local web page.
-    }
-    */
-    //JF: New fuction to handle both RS485 and TCPIP
+
+    //JF: New fuction to handle both RS485 and TCPIP connections to meters.
     handlePowerMeter(i);
     
     postToAmpXPortal2(i); //Also post to the remote server as soon as the device starts up.
   }
+  //Update the webpage through the websocket with the meter data.
   handleWebSocket();
 
 }
@@ -290,10 +287,19 @@ void loop() {
   static unsigned long counter1 = 0;
   static unsigned long counter2 = 0;
   static unsigned long counter3 = 0;
+  
+  //Interval to test the meter connection and read the parameters, and update the local web page.
+  const unsigned long METER_CONNECTION_INTERVAL = 3000;    // 3 seconds
+  //Interval to post the meter data to the remote server
+  const unsigned long REMOTE_SERVER_INTERVAL = 30000;    // 30 seconds
+  //Interval to reboot the ESP32
+  const unsigned long REBOOT_INTERVAL = 86400000;    // 24 hours
+
+  //Built-in Arduino function that returns the number of milliseconds since the Arduino board began running the current program.
   unsigned long now = millis();
 
   //Test meter connection and read the parameters every 3 seconds
-  if (now - counter1 > 3000) {
+  if (now - counter1 > METER_CONNECTION_INTERVAL) {
     //Test if the meter is still connected.
     if (modbus_test_connection()) {
       debugln("Connection test successful! We are able to communicate with the meter with modbus over TCPIP!");
@@ -321,13 +327,13 @@ void loop() {
         debugln("TCPIP Modbus initialized");
       #endif
     }
-
+    //Reset the counter
     counter1 = now;
   }
 
   // Post meter data to remote server every 5 minutes, 300000
   //TODO: JF 2025-06-08 for testing, i decreased it to 30 seconds (30000).
-  if (now - counter2 > 30000) {
+  if (now - counter2 > REMOTE_SERVER_INTERVAL) {
     //Post meter data to remote server
     for (int i = 1; i <= numberOfMeters; i++) {
       //postToEmonCMS(i);
@@ -337,7 +343,7 @@ void loop() {
   }
 
   //Reboot every 24 hours to ensure it keeps working, 86400000
-  if (now - counter3 > 86400000) {
+  if (now - counter3 > REBOOT_INTERVAL) {
     //Reboot the ESP32
     //ESP.restart();
     counter3 = now;
@@ -346,7 +352,7 @@ void loop() {
 
   //These functions must run continuesly, so one can not include a delay in the main loop.
   server.handleClient();  //Handle webserver requests from client
-  webSocket.loop();
+  webSocket.loop();       //Handle websocket requests from client
 }
 
 

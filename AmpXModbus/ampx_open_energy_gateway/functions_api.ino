@@ -1,57 +1,8 @@
 //API to post data to the AmpX Portal and EmonCMS
 
-/*
-void postToAmpXPortal(int meterNumber = 1) { //old postToRemoteServer
-  Serial.println("postToAmpXPortal function called");
-
-  String meterPrefix = "m" + String(meterNumber) + "_";
-
-    // Prepare JSON payload
-  String httpRequestData = "{\"gateway_id\":\"" + String(AMPX_GATEWAY_ID) + 
-                            "\",\"meter_id\":" + String(meterNumber) + 
-                            ",\"energy_usage\":" + String(JsonDoc[meterPrefix + "active_energy_imported_tot"]) + 
-                            ",\"power_max\":" + String(JsonDoc[meterPrefix + "active_power_tot"]) + "}";
-  Serial.println("httpRequestData:  " + httpRequestData);
-
-  //const char* ampxportal_apipath = "wp-json/ampx-energy/v1/log";
-  String ampxportal_apipath = "wp-json/ampx-energy/v1/log";
-  
-  //String url = String(ampxportal_server_local) + String(ampxportal_apipath);
-  String url = String(ampxportal_server_live) + String(ampxportal_apipath);
-  Serial.println("URL: " + url);
-
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;   
-    http.begin(url);
-    //Specify content-type header
-    http.addHeader("Content-Type", "application/json");
-  
-    // Send HTTP POST request
-    int httpResponseCode = http.POST(httpRequestData);
-
-    // Check the response code
-    if (httpResponseCode > 0) {
-      String response = http.getString();
-      Serial.println(httpResponseCode);
-      Serial.println("Response: " + response);
-      //Indicate that we have internet connection and server response by turning on a LED.
-      digitalWrite(LED_4_INTERNET, HIGH);      
-    } else {
-      Serial.print("Error on sending POST: ");
-      Serial.println(httpResponseCode);
-      Serial.println("Error message: " + http.errorToString(httpResponseCode));
-    }
-    http.end();
-  
-  } else {
-    Serial.println("WiFi Disconnected");
-  }
-
-}
-*/
-
+//Post data to the AmpX Portal
 void postToAmpXPortal2(int meterNumber = 1) {
-    Serial.println("postToAmpXPortal2 function called - Docker API");
+    debugln("postToAmpXPortal2 function called - Docker API");
   
     String meterPrefix = "m" + String(meterNumber) + "_";
     
@@ -113,12 +64,12 @@ void postToAmpXPortal2(int meterNumber = 1) {
     httpRequestData += "}}"; // Close values object and main object
     
     // Debug: Print the JSON payload and URL
-    Serial.println("[DEBUG] JSON payload to be sent:");
-    Serial.println(httpRequestData);
-    Serial.println("[DEBUG] Target URL:");
+    debugln("[DEBUG] JSON payload to be sent:");
+    debugln(httpRequestData);
+    debugln("[DEBUG] Target URL:");
     String url = String(ampxportal_server_live);
     //String url = String(ampxportal_server_local);
-    Serial.println("URL: " + url);
+    debugln("URL: " + url);
   
     if (WiFi.status() == WL_CONNECTED) {
       HTTPClient http;   
@@ -130,27 +81,46 @@ void postToAmpXPortal2(int meterNumber = 1) {
   
       // Debug: Print HTTP response code and response body
       String response = http.getString();
-      Serial.print("[DEBUG] HTTP Response Code: ");
-      Serial.println(httpResponseCode);
-      Serial.print("[DEBUG] HTTP Response Body: ");
-      Serial.println(response);
+      debug("[DEBUG] HTTP Response Code: ");
+      debugln(httpResponseCode);
+      debug("[DEBUG] HTTP Response Body: ");
+      debugln(response);
   
       // Check the response code
       if (httpResponseCode == 201) {
-        Serial.println("✅ SUCCESS: Data sent to Docker API v2!");
+        debugln("✅ SUCCESS: Data sent to Docker API v2!");
         digitalWrite(LED_4_INTERNET, HIGH);
+        digitalWrite(LED_5_SERVER, HIGH);
       } else {
-        Serial.print("❌ Error on sending POST: ");
-        Serial.println(httpResponseCode);
-        Serial.println("Error message: " + http.errorToString(httpResponseCode));
+        debug("❌ Error on sending POST: ");
+        digitalWrite(LED_5_SERVER, LOW);
+        debugln(httpResponseCode);
+        debugln("Error message: " + http.errorToString(httpResponseCode));
+
+          // Only test internet on connection-related errors
+        if (httpResponseCode == HTTPC_ERROR_CONNECTION_REFUSED || 
+            httpResponseCode == HTTPC_ERROR_CONNECTION_LOST ||
+            httpResponseCode == HTTPC_ERROR_READ_TIMEOUT) {
+        
+        if (testInternetConnection()) {
+          debugln("✅ Internet is working - API issue might be server-side");
+          digitalWrite(LED_4_INTERNET, HIGH);
+        } else {
+          debugln("❌ No internet connection - this explains the API failure");
+          digitalWrite(LED_4_INTERNET, LOW);
+        }
+      }
       }
       http.end();
     
     } else {
-      Serial.println("WiFi Disconnected");
+      debugln("WiFi Disconnected");
+      digitalWrite(LED_4_INTERNET, LOW);
+      digitalWrite(LED_5_SERVER, LOW);
     }
   }
 
+//Post data to EmonCMS
 void postToEmonCMS(int meterNumber = 1) { 
     //old postToRemoteServer
     String meterPrefix = "m" + String(meterNumber) + "_";
@@ -166,7 +136,7 @@ void postToEmonCMS(int meterNumber = 1) {
     valuesString += ",power2:" + String(test_power2);
     valuesString += ",power3:" + String(test_power3);
     valuesString += ",powert:" + String(test_powert);
-  //  Serial.println("valuesString:  " + valuesString);
+  //  debugln("valuesString:  " + valuesString);
   */
   
     String valuesString2 ="";
@@ -174,14 +144,14 @@ void postToEmonCMS(int meterNumber = 1) {
     valuesString2 += ",power2:" + String(JsonDoc[meterPrefix + "active_power_L2"]);
     valuesString2 += ",power3:" + String(JsonDoc[meterPrefix + "active_power_L3"]);
     valuesString2 += ",powert:" + String(JsonDoc[meterPrefix + "active_power_tot"]);
-   // Serial.println("valuesString2:  " + valuesString2);
+   // debugln("valuesString2:  " + valuesString2);
   
     //Add energy imported values
     valuesString2 += ",energy1:" + String(JsonDoc[meterPrefix + "active_energy_imported_L1"]);
     valuesString2 += ",energy2:" + String(JsonDoc[meterPrefix + "active_energy_imported_L2"]);
     valuesString2 += ",energy3:" + String(JsonDoc[meterPrefix + "active_energy_imported_L3"]);
     valuesString2 += ",energyt:" + String(JsonDoc[meterPrefix + "active_energy_imported_tot"]);
-    Serial.println("valuesString2:  " + valuesString2);
+    debugln("valuesString2:  " + valuesString2);
   
   
     if (WiFi.status() == WL_CONNECTED) {
@@ -196,24 +166,68 @@ void postToEmonCMS(int meterNumber = 1) {
       //Test with actual values
       url += valuesString2;
       url += "}&apikey=" + String(api_key);
-      //Serial.println(url);
+      //debugln(url);
   
-      
-  
+        
       http.begin(url);
       int httpResponseCode = http.GET();
       if (httpResponseCode > 0) {
         String response = http.getString();
-        //Serial.println(httpResponseCode);
+        //debugln(httpResponseCode);
         debug("Https client Response: ");
         debugln(response);
+        digitalWrite(LED_4_INTERNET, HIGH);
+        digitalWrite(LED_5_SERVER, HIGH);
       } else {
         debug("Error on sending POST: ");
+        digitalWrite(LED_4_INTERNET, LOW);
+        digitalWrite(LED_5_SERVER, LOW);
         debugln(httpResponseCode);
         //Responce code -1 means no internet access, data ok?
+        if (httpResponseCode == HTTPC_ERROR_CONNECTION_REFUSED || 
+            httpResponseCode == HTTPC_ERROR_CONNECTION_LOST ||
+            httpResponseCode == HTTPC_ERROR_READ_TIMEOUT) {
+
+            if (testInternetConnection()) {
+              debugln("✅ Internet is working - API issue might be server-side");
+              digitalWrite(LED_4_INTERNET, HIGH);
+            } else {
+              debugln("❌ No internet connection - this explains the API failure");
+              digitalWrite(LED_4_INTERNET, LOW);
+            }
+        }
       }
       http.end();
     } else {
       debugln("WiFi is disconnected...");
+      digitalWrite(LED_4_INTERNET, LOW);
+      digitalWrite(LED_5_SERVER, LOW);
     }
   }
+
+
+// Test internet connectivity by pinging three servers to see if they are reachable.
+bool testInternetConnection() {
+  const char* testUrls[] = {
+    "http://httpbin.org/get",
+    "http://www.google.com",
+    "http://www.cloudflare.com"
+  };
+  
+  HTTPClient http;
+  http.setTimeout(3000); // 3 second timeout
+  
+  for (const char* url : testUrls) {
+    http.begin(url);
+    int httpCode = http.GET();
+    http.end();
+    
+    if (httpCode == HTTP_CODE_OK) {
+      debugln("✅ Internet connection successful");
+      return true;
+    }
+  }
+  
+  debugln("❌ Internet connection failed");
+  return false;
+}
