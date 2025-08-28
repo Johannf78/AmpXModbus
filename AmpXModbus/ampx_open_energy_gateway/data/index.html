@@ -1,6 +1,3 @@
-//Raw string literal quotation, webpage HTML...
-/*
-String webpage = R"(
 <!DOCTYPE html>
 <html>
 <head>
@@ -45,19 +42,16 @@ String webpage = R"(
   </tr>
   </table>
   
-
-
-
   <br/>
   <div id='meter1'>
-    <h3>Meter: 1, Serial number: m1_serial_number<span id='m1_name'>test<span></h3>
+    <h3>Meter: 1, Serial number: m1_serial_number<span id='m1_name'>test</span></h3>
     <table>
     <tr>
       <th>Entity</th>
       <th>L1</th>
-      <th>L2</<th>
-      <th>L3</<th>
-      <th>Avg/Max</<th>
+      <th>L2</th>
+      <th>L3</th>
+      <th>Avg/Max</th>
     </tr>
     <tr>
       <td class='text-align-left'>Voltage</td>
@@ -92,14 +86,14 @@ String webpage = R"(
 
   <br/>
   <div id='meter2'>
-    <h3>Meter: 2, Serial number: m2_serial_number<span id='m2_name'><span></h3>
+    <h3>Meter: 2, Serial number: m2_serial_number<span id='m2_name'></span></h3>
     <table>
     <tr>
       <th>Entity</th>
       <th>L1</th>
-      <th>L2</<th>
-      <th>L3</<th>
-      <th>Avg/Max</<th>
+      <th>L2</th>
+      <th>L3</th>
+      <th>Avg/Max</th>
     </tr>
     <tr>
       <td class='text-align-left'>Voltage</td>
@@ -134,14 +128,14 @@ String webpage = R"(
 
   <br/>
   <div id='meter3'>
-    <h3>Meter: 3, Serial number: m3_serial_number<span id='m3_name'><span></h3>
+    <h3>Meter: 3, Serial number: m3_serial_number<span id='m3_name'></span></h3>
     <table>
     <tr>
       <th>Entity</th>
       <th>L1</th>
-      <th>L2</<th>
-      <th>L3</<th>
-      <th>Avg/Max</<th>
+      <th>L2</th>
+      <th>L3</th>
+      <th>Avg/Max</th>
     </tr>
     <tr>
       <td class='text-align-left'>Voltage</td>
@@ -174,17 +168,16 @@ String webpage = R"(
     </table>
   </div>
 
-
   <br/>
   <div id='meter4'>
-    <h3>Meter: 4, Serial number: m4_serial_number<span id='m4_name'><span></h3>
+    <h3>Meter: 4, Serial number: m4_serial_number<span id='m4_name'></span></h3>
     <table>
     <tr>
       <th>Entity</th>
       <th>L1</th>
-      <th>L2</<th>
-      <th>L3</<th>
-      <th>Avg/Max</<th>
+      <th>L2</th>
+      <th>L3</th>
+      <th>Avg/Max</th>
     </tr>
     <tr>
       <td class='text-align-left'>Voltage</td>
@@ -220,21 +213,20 @@ String webpage = R"(
 <p>Values updates every 3 seconds.</p>
 <p><a href="/settings">Settings </a></p>
 
-
 </main>
 <footer>
 <br/><br/>
-<span><a href='www.ampx.co/' target'_blank'>www.ampx.co</a></span>
+<span><a href='www.ampx.co/' target='_blank'>www.ampx.co</a></span>
 </footer>
 </body>
 <script>
   var socket;
   function init(){
     //This variable is updated by the Arduino code before sending the HTML
-    var numberOfMeters = numberOfMetersValue; // Define the number of meters as an integer
+    var numberOfMeters = %NUMBER_OF_METERS%; // Will be replaced by Arduino code
   
-      // Hide the div with id 'meter2', 'meter3', and 'meter4' based on the numberOfMeters
-      // Also hide the summary table rows
+    // Hide the div with id 'meter2', 'meter3', and 'meter4' based on the numberOfMeters
+    // Also hide the summary table rows
     if (numberOfMeters == 1) {
         document.getElementById('meter2_summary').style.display = 'none';
         document.getElementById('meter3_summary').style.display = 'none';
@@ -259,8 +251,8 @@ String webpage = R"(
     socket.onmessage = function(event) {
       processCommand(event);
     };
-
   }
+  
   function processCommand(event){
     var data = JSON.parse(event.data);
     
@@ -276,19 +268,17 @@ String webpage = R"(
           value += ' kW';
         else if (key.includes('energy'))
           value += ' kWh';
-      else if (key.includes('name'))
+        else if (key.includes('name'))
           value = ', Name: ' + value;
            
         //console.log("Key:", key, "Value:", value);
         document.getElementById(key).innerHTML = value;
-        
       }
     }
   }
+  
   window.onload = function(event){
     init();
   }
 </script>
 </html>
-  )";
-*/

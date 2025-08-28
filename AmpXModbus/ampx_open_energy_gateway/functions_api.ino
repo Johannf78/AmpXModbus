@@ -97,19 +97,21 @@ void postToAmpXPortal2(int meterNumber = 1) {
         debugln(httpResponseCode);
         debugln("Error message: " + http.errorToString(httpResponseCode));
 
-          // Only test internet on connection-related errors
+        // Only test internet on connection-related errors
         if (httpResponseCode == HTTPC_ERROR_CONNECTION_REFUSED || 
             httpResponseCode == HTTPC_ERROR_CONNECTION_LOST ||
             httpResponseCode == HTTPC_ERROR_READ_TIMEOUT) {
-        
-        if (testInternetConnection()) {
-          debugln("✅ Internet is working - API issue might be server-side");
-          digitalWrite(LED_4_INTERNET, HIGH);
+              debugln("❌ No internet connection - this explains the API failure");
+              digitalWrite(LED_4_INTERNET, LOW);
         } else {
-          debugln("❌ No internet connection - this explains the API failure");
-          digitalWrite(LED_4_INTERNET, LOW);
+          if (testInternetConnection()) {
+            debugln("✅ Internet is working - API issue might be server-side");
+            digitalWrite(LED_4_INTERNET, HIGH);
+          } else {
+            debugln("❌ No internet connection - this explains the API failure");
+            digitalWrite(LED_4_INTERNET, LOW);
+          }
         }
-      }
       }
       http.end();
     
@@ -120,24 +122,23 @@ void postToAmpXPortal2(int meterNumber = 1) {
     }
   }
 
-//Post data to EmonCMS
+//Post data to EmonCMS - commented out to save program space
+/*
 void postToEmonCMS(int meterNumber = 1) { 
     //old postToRemoteServer
     String meterPrefix = "m" + String(meterNumber) + "_";
   
-  /* for testing 
-    int test_power1 = random(1000);
-    int test_power2 = random(1000);
-    int test_power3 = random(1000);
-    int test_powert = random(1000);
+   //for testing 
+    //int test_power1 = random(1000);
+    //int test_power2 = random(1000);
+    //int test_power3 = random(1000);
+    //int test_powert = random(1000);
   
     String valuesString ="";
-    valuesString = "power1:" + String(test_power1);
-    valuesString += ",power2:" + String(test_power2);
-    valuesString += ",power3:" + String(test_power3);
-    valuesString += ",powert:" + String(test_powert);
-  //  debugln("valuesString:  " + valuesString);
-  */
+    //valuesString = "power1:" + String(test_power1);
+    //valuesString += ",power2:" + String(test_power2);
+    //valuesString += ",power3:" + String(test_power3);
+    //valuesString += ",powert:" + String(test_power
   
     String valuesString2 ="";
     valuesString2 = "power1:" + String(JsonDoc[meterPrefix + "active_power_L1"]);
@@ -205,6 +206,7 @@ void postToEmonCMS(int meterNumber = 1) {
     }
   }
 
+*/
 
 // Test internet connectivity by pinging three servers to see if they are reachable.
 bool testInternetConnection() {

@@ -58,12 +58,14 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 //Built-in ESP32 library that provides HTTP client functionality for making HTTP requests to web servers and APIs.
 #include <HTTPClient.h>
 
-
+//SPIFFS SPI Flash File System, this is used to store the web pages in the flash memory of the ESP32.
+//This adds about 30% to the 1MB program file but moves and loads the html files from the SPIFFS memomory
+#include "SPIFFS.h"
 
 //The HTML code for the webpages are stored in a seperate file, this makes the code easier to read.
-#include "webpage.h"
-#include "web_settings.h"
-#include "web_admin.h"
+//#include "webpage.h"  //Moved to SPIFFS
+//#include "web_settings.h" //Moved to SPIFFS
+//#include "web_admin.h" //Moved to SPIFFS
 
 //Define the meter registers and datatypes here in json format.
 #include "meter_registers.h"
@@ -141,11 +143,12 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 
 
 //Define the status indicating LEDs pins
-#define LED_1_POWER     12 //Indicates Power is on
-#define LED_2_METER     14 //Indicates Meter is connected via Modbus
-#define LED_3_WIFI      27 //Indicates WiFi is connected
-#define LED_4_INTERNET  26 //Indicates Internet is connected
-#define LED_5_SERVER    25 //Indicates succesfull communication with the Server
+//                        //C3  //WROOM
+#define LED_1_POWER     12 //2   //12 //Indicates Power is on 
+#define LED_2_METER     14 //3   //14 //Indicates Meter is connected via Modbus
+#define LED_3_WIFI      27 //4   //27 //Indicates WiFi is connected
+#define LED_4_INTERNET  26 //5   //26 //Indicates Internet is connected, this is the green LED
+#define LED_5_SERVER    25 //6   //25 //Indicates succesfull communication with the Server
 
 
 //Constant data types, used in the processRegisters function.
@@ -189,14 +192,16 @@ bool readSerial = false;
 
 //EMONCMS, Remote energy logging, https://JsonDocs.openenergymonitor.org/emoncms/index.html
 //TODO This needs to be removed, can forward to other portal from ampx portal
+/*Commented out to save space
 const char* emoncms_server = "http://emoncms.org";
 const char* api_key = "c0526f06893d1063800d3bb966927711"; //your_API_KEY
+*/
 
 //AmpX Energy Portal, Remote energy logging
 //TODO This needs to be saved in persistent memory and moved to the web admin settings page.
 //const char* ampxportal_server_local = "http://192.168.2.32:8080/api/";
 const char* ampxportal_server_local = "http://192.168.2.32:8080/api/v2/";
-const char* ampxportal_server_live = "https://portal.ampx.app/api/v2/"; //old "https://app.ampx.co/api/v2/";
+const char* ampxportal_server_live = "https://ampx.app/api/v2/"; //"https://portal.ampx.app/api/v2/"; //old "https://app.ampx.co/api/v2/";
 
 
 // Which API to use local or live? - set to true for local development, false for live

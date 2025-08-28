@@ -5,7 +5,7 @@
 
 //This is an easy way to exclude all serial.print commands from production code to reduce the file size.
 //Change this varialbe to enable or disable debugging
-#define DEBUG 1
+#define DEBUG 0
 
 #if DEBUG == 1
   #define debug(x) Serial.print(x)
