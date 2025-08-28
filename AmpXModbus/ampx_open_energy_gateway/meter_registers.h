@@ -1,7 +1,4 @@
-#ifndef METER_REGISTERS_H
-#define METER_REGISTERS_H
 
-#include <ArduinoJson.h>
 
 //This is an easy way to exclude all serial.print commands from production code to reduce the file size.
 //Change this varialbe to enable or disable debugging
@@ -24,11 +21,49 @@ const int dataTypeFloat = 3;
 // Global JSON document to store meter register definitions
 extern JsonDocument MeterRegisterDefs;
 
-// This function sets up the meter register definitions in a JSON document
-void setupMeterRegisters() {
-  // Format: [register_number, number_of_registers, data_type, friendly_name, json_key]
+// Forward declaration
+void setupDefaultMeterRegisters();
 
-  debugln("Inside setupMeterRegisters function. Top of function");
+// This function loads the meter register definitions from a JSON file in SPIFFS
+void setupMeterRegisters() {
+  debugln("Loading meter register definitions from SPIFFS...");
+  
+  // Read the JSON file from SPIFFS
+  File file = SPIFFS.open("/meter_registers_meatrol.json", "r");
+  if (!file) {
+    debugln("Failed to open meter_registers_meatrol.json from SPIFFS");
+    debugln("Falling back to default register definitions...");
+    setupDefaultMeterRegisters();
+    return;
+  }
+  
+  // Read the file content
+  String jsonString = file.readString();
+  file.close();
+  
+  debugln("JSON file content:");
+  debugln(jsonString);
+  
+  // Parse the JSON
+  DeserializationError error = deserializeJson(MeterRegisterDefs, jsonString);
+  if (error) {
+    debugln("Failed to parse JSON: ");
+    debugln(error.c_str());
+    debugln("Falling back to default register definitions...");
+    setupDefaultMeterRegisters();
+    return;
+  }
+  
+  //Display the meter register definitions
+  debugln("Meter register definitions loaded successfully from SPIFFS");
+  debugln("MeterRegisterDefs Json:");
+  serializeJsonPretty(MeterRegisterDefs, Serial);
+  debugln("");
+}
+
+// Fallback function with hardcoded register definitions (same as before)
+void setupDefaultMeterRegisters() {
+  debugln("Setting up default meter register definitions...");
   
   // Serial Number
   JsonArray serialNumber = MeterRegisterDefs.createNestedArray("serialNumber");
@@ -147,13 +182,8 @@ void setupMeterRegisters() {
   energyImportedTotal.add("Energy Imported Total");
   energyImportedTotal.add("active_energy_imported_tot");
 
-  // Print to Serial with pretty formatting
- 
-  debugln("MeterRegisterDefs Json.");
+  debugln("Default meter register definitions loaded");
+  debugln("MeterRegisterDefs Json:");
   serializeJsonPretty(MeterRegisterDefs, Serial);
-  
-  debugln("Inside setupMeterRegisters function. End of function");
-  debugln(""); // Add a newline at the end
+  debugln("");
 }
-
-#endif // METER_REGISTERS_H 

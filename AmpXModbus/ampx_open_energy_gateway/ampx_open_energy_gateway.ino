@@ -133,12 +133,12 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 
   //Define Ethernet Settings, Mac and IPs
   byte mac[] = {0x90, 0xA2, 0xDA, 0x0E, 0x94, 0xB5};
-  IPAddress pc_ip(192, 168, 2, 32);   // PC IP, Assign a static IP to your PC and change it here to be the same.
-  IPAddress ip(192, 168, 2, 121);     // Arduino IP
-  IPAddress gateway(192, 168, 2, 1);  // Network gateway
+  //IPAddress pc_ip(192, 168, 1, 32);   // PC IP, Assign a static IP to your PC and change it here to be the same.
+  IPAddress ip(192, 168, 1, 50);     // Arduino IP
+  IPAddress gateway(192, 168, 1, 1);  // Network gateway
   IPAddress subnet(255, 255, 255, 0); // Subnet mask
-  IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
-
+  IPAddress meter_ip(192, 168, 1, 55); // Energy meter IP
+  //IPAddress meter_ip(192, 168, 2, 122); // Energy meter IP
 #endif
 
 
@@ -201,7 +201,8 @@ const char* api_key = "c0526f06893d1063800d3bb966927711"; //your_API_KEY
 //TODO This needs to be saved in persistent memory and moved to the web admin settings page.
 //const char* ampxportal_server_local = "http://192.168.2.32:8080/api/";
 const char* ampxportal_server_local = "http://192.168.2.32:8080/api/v2/";
-const char* ampxportal_server_live = "https://ampx.app/api/v2/"; //"https://portal.ampx.app/api/v2/"; //old "https://app.ampx.co/api/v2/";
+const char* ampxportal_server_live = "https://portal.ampx.app/api/v2/";
+//"https://ampx.app/api/v2/"; //old "https://portal.ampx.app/api/v2/"; //old "https://app.ampx.co/api/v2/";
 
 
 // Which API to use local or live? - set to true for local development, false for live
@@ -225,6 +226,8 @@ void setup() {
   pinMode(LED_2_METER, OUTPUT);
   pinMode(LED_3_WIFI, OUTPUT);
   pinMode(LED_4_INTERNET, OUTPUT);
+  pinMode(LED_5_SERVER, OUTPUT);
+  
 
   //Indicate that the power is on with a LED
   digitalWrite(LED_1_POWER, HIGH);
