@@ -1,5 +1,7 @@
 //Initialise the server and websocket
 void initServer() {
+  debugln("Starting initServer()...");
+  
   // Initialize SPIFFS
   if (!SPIFFS.begin(true)) {
     debugln("SPIFFS Mount Failed");
@@ -7,19 +9,44 @@ void initServer() {
   }
   debugln("SPIFFS mounted successfully");
   
+  // List all files in SPIFFS for debugging
+  debugln("Files in SPIFFS:");
+  File root = SPIFFS.open("/");
+  if (root) {
+    File file = root.openNextFile();
+    while (file) {
+      debug("File: ");
+      debug(file.name());
+      debug(" Size: ");
+      debugln(String(file.size()) + " bytes");
+      file = root.openNextFile();
+    }
+    root.close();
+  } else {
+    debugln("Failed to open SPIFFS root directory");
+  }
+  
+  debugln("Setting up server routes...");
   server.on("/", handleRoot);
   // Commented out to reduce space
   // server.on("/update", HTTP_POST, handleUpdate);
   server.on("/settings", handleSettings);
   server.on("/admin", handleAdmin);
   server.on("/update_meters_name", HTTP_POST, handleChangeMetersName);
+  
+  debugln("Starting web server...");
   server.begin();
+  debugln("Web server started on port 80");
+  
   //Initialise the websockets on port 81
   webSocket.begin();
+  debugln("WebSocket server started on port 81");
+  debugln("initServer() completed successfully");
 }
 
 //Handle the root webpage
 void handleRoot() {
+  debugln("=== handleRoot() called ===");
   
   // Read HTML file from SPIFFS
   File file = SPIFFS.open("/index.html", "r");
@@ -28,10 +55,16 @@ void handleRoot() {
     server.send(500, "text/plain", "Failed to read webpage from SPIFFS");
     return;
   }
+  debugln("Successfully opened index.html from SPIFFS");
+  debugln("File size: " + String(file.size()) + " bytes");
   
   //Define the webpage variable and read the file from the SPIFFS file system
   String webpage = file.readString();
   file.close();
+  
+  debugln("Webpage content length: " + String(webpage.length()));
+  debugln("First 100 characters of webpage:");
+  debugln(webpage.substring(0, min(100, (int)webpage.length())));
 
   //Replace the string m1_serial_number with the actual serial number, done here as it does not update regularly like values.
   webpage.replace("m1_serial_number", m1_serial_number);
@@ -53,7 +86,9 @@ void handleRoot() {
   JsonDoc["m3_name"] = preferences.getString("m3_name");
   JsonDoc["m4_name"] = preferences.getString("m4_name");
 
+  debugln("Sending webpage to client...");
   server.send(200, "text/html", webpage);
+  debugln("=== handleRoot() completed ===");
 }
 
 //Handle the settings webpage
