@@ -1,30 +1,119 @@
-# AmpX Modbus Project Intelligence
+# AmpX Modbus Library - Project Intelligence
 
-## Memory Bank
-- Remember to read the entire Memory Bank at the start of each session
-- Update activeContext.md and progress.md after each significant development milestone
-- Follow the established hierarchy when updating documentation
-- Maintain clear relationships between all documentation files
+## Project Overview
+ESP32-based energy monitoring system with Modbus communication (RS485/TCP/IP), web interface, and cloud integration. Mature codebase with multiple examples and version history.
 
-## Project Patterns
-- This is an ESP32-based Modbus TCP/IP server implementation
-- The project is focused on industrial audio amplification equipment
-- Documentation follows a structured approach with the Memory Bank system
+## Critical Implementation Patterns
+
+### Modbus Communication
+- **CRC-16**: Standard Modbus CRC calculation with proper byte order
+- **Data Conversion**: Byte swapping for float/int64 with `convertToFloat()` and `combineAndSwap64()`
+- **Error Handling**: 1-second timeout with CRC validation
+- **Protocol Support**: Both RS485 (MAX485) and TCP/IP (Ethernet) implementations
+
+### Web Interface Architecture
+- **Static HTML**: Embedded HTML strings with placeholder replacement
+- **WebSocket**: Real-time updates on port 81
+- **JSON API**: ArduinoJson for data serialization
+- **Mobile Responsive**: Basic CSS for mobile compatibility
+
+### System Management
+- **WiFi**: WiFiManager for auto-configuration
+- **OTA**: Over-the-air firmware updates
+- **NVS**: Preferences for persistent storage
+- **Watchdog**: 24-hour automatic restart
+
+## Key Technical Decisions
+
+### Hardware Configuration
+- **ESP32 Node32s**: Primary development platform
+- **RS485 Pins**: DE/RE on GPIO 4, RX/TX on GPIO 16/17
+- **Status LEDs**: GPIO 12,14,27,26 for system health
+- **Ethernet**: SPI-based W5500 module on GPIO 5
+
+### Data Processing
+- **Register Mapping**: Standard Modbus register addresses for energy meters
+- **Multi-meter**: Support for up to 4 meters simultaneously
+- **Timing**: 3-second meter reads, 5-minute cloud uploads
+- **Memory**: 512-byte JSON buffers, ~50KB total RAM usage
+
+### Cloud Integration
+- **AmpX Portal**: Primary cloud service (app.ampx.co)
+- **EmonCMS**: Secondary open-source option
+- **Authentication**: API key-based
+- **Data Format**: JSON with meter serial numbers and readings
+
+## Code Organization Patterns
+
+### File Structure
+- **Library Core**: `src/AmpXModbus.h/.cpp` - Core utility functions
+- **Examples**: Progressive complexity from basic to full web interface
+- **Versions**: Historical versions in `versions/` directory
+- **Functions**: Modbus functions in separate `.ino` files
+
+### Function Naming
+- **Modbus**: `readHoldingRegisters()`, `readHoldingRegisters64()`
+- **Data Processing**: `processRegisters()`, `convertToFloat()`
+- **Web**: `handleRoot()`, `handleWebSocket()`
+- **System**: `initWiFi()`, `initServer()`, `postToAmpXPortal()`
+
+## Common Issues and Solutions
+
+### Communication Problems
+- **Timeout**: Increase timeout or check wiring
+- **CRC Errors**: Verify byte order and data integrity
+- **No Response**: Check slave ID and register addresses
+
+### Web Interface Issues
+- **HTML Syntax**: Some malformed tags in webpage.ino
+- **WebSocket**: Ensure port 81 is accessible
+- **JSON**: Check buffer size for large datasets
+
+### Configuration Challenges
+- **Hard-coded Values**: IP addresses and credentials in source
+- **WiFi**: Use WiFiManager for easy configuration
+- **Meter Detection**: Automatic detection based on serial number reads
+
+## Development Workflow
+
+### Adding New Features
+1. **Modbus Functions**: Add to `ampx_modbus_functions.ino`
+2. **Web Interface**: Update HTML in `webpage.ino`
+3. **Cloud Integration**: Extend `postToAmpXPortal()` function
+4. **Configuration**: Add to `web_settings.h` or NVS preferences
+
+### Testing Approach
+- **Manual Testing**: Use examples for validation
+- **Serial Debug**: Enable DEBUG flag for detailed output
+- **Web Interface**: Test on multiple devices/browsers
+- **Cloud Integration**: Verify data reaches remote servers
+
+### Deployment Considerations
+- **Production**: Use nginx reverse proxy (see nginx_config_update.ps1)
+- **Security**: Consider adding basic authentication
+- **Monitoring**: LED indicators for system health
+- **Updates**: OTA capability for remote firmware updates
+
+## Performance Characteristics
+- **Memory Usage**: ~50KB RAM, well within ESP32 limits
+- **Network**: ~1KB web requests, ~500 bytes cloud uploads
+- **Timing**: 3-second meter reads, 5-minute cloud uploads
+- **Reliability**: 24-hour watchdog restart for stability
 
 ## User Preferences
-- Prefer step-by-step approaches when implementing new features
-- Test each component before proceeding to the next stage
-- Maintain comprehensive documentation of all implementation decisions
+- **Step-by-step**: User prefers detailed explanations
+- **Testing**: Confirm functionality after each step
+- **Documentation**: Comprehensive documentation expected
+- **Standards**: Follow Arduino/ESP32 best practices
 
-## Implementation Guidelines
-- Follow C++ best practices for embedded systems
-- Prioritize memory efficiency and response time in implementations
-- Consider error handling at all levels of the architecture
-- Use clear and consistent naming conventions
+## Critical Issues Requiring Immediate Attention
+- **Header File Typo**: `src/AmpXModbus.h` line 1 has "ise//" instead of "//"
+- **Missing Function Declaration**: `convertToFloat()` used but not declared in header
+- **Syntax Error**: Stray "c" character in example 5 line 133
+- **Inconsistent Library Usage**: Mixed approaches across examples (custom vs external libraries)
 
-## Learning Focus
-- As the project develops, document key insights and patterns in this file
-- Track rationale for technical decisions
-- Maintain notes on implementation challenges and solutions
-
-This file will evolve as project patterns and preferences become more established. 
+## Library Architecture Notes
+- **Core Library**: Only provides 3 basic utility functions (CRC, convertToFloat, combineAndSwap)
+- **External Libraries**: Separate `ampx_modbus_rs485` and `ampx_modbus_tcpip` libraries exist
+- **Example Patterns**: Some use ModbusMaster library, others use custom implementations
+- **Version Evolution**: Clear progression from basic to advanced implementations in versions/

@@ -1,13 +1,13 @@
 {
 	"folders": [
 		{
-			"path": ".."
+			"path": "."
 		},
 		{
-			"path": "../../../../../../JF Data/UserData/Documents/Arduino/libraries/ampx_modbus_rs485"
+			"path": "../../../../../JF Data/UserData/Documents/Arduino/libraries/ampx_modbus_rs485"
 		},
 		{
-			"path": "../../../../../../JF Data/UserData/Documents/Arduino/libraries/ampx_modbus_tcpip"
+			"path": "../../../../../JF Data/UserData/Documents/Arduino/libraries/ampx_modbus_tcpip"
 		}
 	],
 	"settings": {}

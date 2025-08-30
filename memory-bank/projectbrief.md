@@ -1,37 +1,32 @@
-# Project Brief: AmpX Energy Gateway
+# AmpX Modbus Library - Project Brief
 
-## Overview
-The AmpX Energy Gateway project aims to implement a communication gateway for energy meters using ESP32 hardware. This system allows for monitoring and collection of energy measurement data through either Modbus TCP/IP or RS485 interfaces, displaying the data locally, and uploading it to a remote API.
+## Project Overview
+The AmpX Modbus Library is an ESP32-based energy monitoring system that communicates with power meters via Modbus protocol (both RS485 and TCP/IP) and provides real-time energy data through web interfaces and remote logging capabilities.
 
-## Core Requirements
-- Implement communication with Meatrol Brand energy meters via:
-  - Modbus TCP/IP 
-  - Modbus RS485 (separate compiled version)
-- Read meter serial numbers and measurement data
-- Display collected data on a local web interface
-- Upload data to a remote API at 15-minute intervals
-- Support for up to 32 meters simultaneously
+## Core Purpose
+- **Energy Monitoring**: Read electrical parameters (voltage, current, power, energy) from power meters
+- **Data Communication**: Support both RS485 and TCP/IP Modbus protocols
+- **Web Interface**: Provide real-time data visualization through local web server
+- **Remote Logging**: Send data to external services (AmpX Portal, EmonCMS)
+- **Gateway Functionality**: Act as a bridge between power meters and cloud services
 
-## Project Goals
-- Create a stable and responsive energy monitoring gateway
-- Enable seamless integration with Meatrol energy meters
-- Provide a simple web interface for real-time data viewing
-- Ensure reliable data collection and API transmission
+## Key Features
+1. **Multi-Protocol Support**: RS485 and TCP/IP Modbus communication
+2. **Multi-Meter Support**: Handle up to 4 power meters simultaneously
+3. **Real-time Web Interface**: Live data display with WebSocket updates
+4. **Remote Data Logging**: Integration with cloud services
+5. **Over-the-Air Updates**: Firmware update capability
+6. **WiFi Management**: Dynamic WiFi configuration
+7. **Status Indicators**: LED status indicators for system health
 
-## Hardware Specifications
-- ESP32 Wroom 32U microcontroller
-- MAX485 interface for RS485 communication
-- W5500 Lite for Ethernet communication
-- Two separate hardware configurations (RS485/TCP)
+## Target Hardware
+- **Primary**: ESP32 Node32s development board
+- **Communication**: RS485 transceiver (MAX485) or Ethernet module
+- **Status LEDs**: 4 LEDs for system status indication
+- **Power Meters**: Compatible with Modbus-enabled energy meters
 
-## Constraints
-- ESP32 hardware limitations
-- No user configuration of communication protocols (hardcoded)
-- No local data storage requirements
-- No specific handling for connectivity issues
-
-## Stakeholders
-- Energy monitoring system operators
-- Integration partners
-
-This document serves as the foundation for all other Memory Bank documents and defines the core scope of the AmpX Energy Gateway project. 
+## Project Structure
+- **Library Core**: `src/AmpXModbus.h` and `src/AmpXModbus.cpp`
+- **Examples**: Progressive examples from basic to advanced functionality
+- **Versions**: Historical versions showing evolution of the system
+- **Documentation**: Hardware connection guides and configuration files

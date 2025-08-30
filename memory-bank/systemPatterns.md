@@ -1,73 +1,96 @@
-# System Patterns: AmpX Energy Gateway
+# System Patterns - AmpX Modbus Library
 
 ## Architecture Overview
-The AmpX Energy Gateway now features a unified architecture for both RS485 and TCP/IP Modbus communication, with shared utility functions and modular initialization routines.
+The system follows a modular, event-driven architecture with clear separation of concerns:
 
-```mermaid
-flowchart TD
-    Network[Network Layer] --> Communication[Communication Layer]
-    Communication --> MeterInterface[Meter Interface]
-    MeterInterface --> DataCollection[Data Collection]
-    DataCollection --> WebDisplay[Web Display]
-    DataCollection --> APIUpload[API Upload]
 ```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Power Meters  │◄──►│  ESP32 Gateway   │◄──►│  Cloud Services │
+│  (Modbus RS485/ │    │                  │    │  (AmpX Portal,  │
+│   TCP/IP)       │    │                  │    │   EmonCMS)      │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                              │
+                              ▼
+                       ┌──────────────────┐
+                       │  Web Interface   │
+                       │  (Local/Remote)  │
+                       └──────────────────┘
+```
+
+## Core Design Patterns
+
+### 1. **Modular Communication Layer**
+- **Protocol Abstraction**: Common interface for RS485 and TCP/IP
+- **Function Separation**: `ampx_modbus_functions.ino` contains all Modbus operations
+- **Error Handling**: Consistent error handling across protocols
+
+### 2. **Data Processing Pipeline**
+```cpp
+Raw Modbus Data → Register Processing → Data Conversion → Web Display/Cloud Upload
+```
+
+### 3. **State Management**
+- **Global Variables**: Meter data stored in global arrays
+- **Static Counters**: Timing control for different operations
+- **Preferences**: Persistent storage for configuration
+
+### 4. **Event-Driven Loop**
+- **Timer-Based Operations**: 3-second meter reads, 5-minute cloud uploads
+- **Continuous Services**: Web server and WebSocket handling
+- **Interrupt-Driven**: Serial communication and network events
 
 ## Key Components
 
-### Communication Layer
-- Handles both RS485 and TCP/IP communication via compile-time selection
-- Shared functions for register conversion (float, int32, int64)
-- Unified meter handler (`handlePowerMeter`) for all meter types
-- Modular initialization for NVS, WiFi, NTP, and Ethernet
+### 1. **Modbus Communication**
+- **CRC Calculation**: Standard Modbus CRC-16 implementation
+- **Request/Response**: Synchronous communication with timeout
+- **Data Conversion**: Byte swapping for different data types (float, int64)
 
-### Meter Interface
-- Meter register definitions and data types managed via JSON
-- Unified processing of all meter data
-- Serial number and special register handling included
+### 2. **Web Interface**
+- **Static HTML**: Embedded HTML with placeholder replacement
+- **WebSocket**: Real-time data updates
+- **REST API**: JSON endpoints for data access
 
-### Data Collection
-- Auto-detects number of connected meters (currently up to 4, architecture supports more)
-- Polls meters at regular intervals
-- Stores data in a global DynamicJsonDocument
+### 3. **Cloud Integration**
+- **HTTP Client**: POST requests to remote servers
+- **JSON Serialization**: ArduinoJson for data formatting
+- **Authentication**: API key-based authentication
 
-### Web Display
-- Local web interface with real-time updates via WebSockets
-- Status LEDs for power, meter, WiFi, and internet/API status
+### 4. **System Management**
+- **WiFi Management**: WiFiManager for configuration
+- **OTA Updates**: Over-the-air firmware updates
+- **Status Monitoring**: LED indicators for system health
 
-### API Upload
-- Two API upload methods: WordPress endpoint and Docker API
-- Custom JSON formatting for each API
-- Uploads data at scheduled intervals
+## Data Flow Patterns
 
-## Design Patterns
+### 1. **Meter Reading Cycle**
+```
+Timer Trigger → Read Registers → Process Data → Update WebSocket → Store Globally
+```
 
-### Shared Utility Functions
-- Centralized register conversion and data processing for maintainability
+### 2. **Web Request Handling**
+```
+HTTP Request → Parse Parameters → Generate Response → Send HTML/JSON
+```
 
-### Unified Handler
-- Single function for all meter types simplifies code and reduces duplication
+### 3. **Cloud Upload Process**
+```
+Timer Trigger → Collect Data → Serialize JSON → HTTP POST → Handle Response
+```
 
-### Modular Initialization
-- Separate functions for NVS, WiFi, NTP, and Ethernet setup
+## Error Handling Patterns
 
-### Status Indication
-- LEDs provide real-time feedback for system state and error conditions
+### 1. **Communication Errors**
+- **Timeout Handling**: 1-second timeout for Modbus responses
+- **CRC Validation**: Automatic error detection
+- **Retry Logic**: Built into communication functions
 
-## Data Flow
-1. System initializes hardware and network
-2. Meters are auto-detected
-3. Data is polled and processed into JSON
-4. WebSocket and API uploads occur on schedule
-5. Status LEDs indicate system health
+### 2. **Network Errors**
+- **Connection Monitoring**: WiFi status checking
+- **Graceful Degradation**: Continue local operation if cloud fails
+- **Automatic Recovery**: WiFi reconnection attempts
 
-## Observed Optimization Opportunities
-- Move credentials and API endpoints to persistent storage
-- Optimize string handling to reduce memory fragmentation
-- Further modularize error handling and recovery
-
-## Current Architecture Strengths
-- Unified, maintainable codebase for all meter types
-- Robust initialization and error/status indication
-- Flexible API integration
-
-This document reflects the latest system patterns and architectural improvements from the most recent code review. 
+### 3. **System Errors**
+- **Watchdog**: 24-hour automatic restart
+- **LED Indicators**: Visual error reporting
+- **Serial Debugging**: Comprehensive debug output

@@ -1,29 +1,47 @@
-# Product Context: AmpX Energy Gateway
+# Product Context - AmpX Modbus Library
 
 ## Problem Statement
-Energy monitoring in industrial and commercial settings requires reliable data collection from meters and integration with management systems. Many existing solutions lack flexibility in supporting both RS485 and TCP/IP based meters, or they require complex setup and configuration.
+Energy monitoring systems often require:
+- **Protocol Flexibility**: Support for different communication methods (RS485, TCP/IP)
+- **Real-time Monitoring**: Live data visualization and alerts
+- **Remote Access**: Cloud connectivity for data logging and analysis
+- **Scalability**: Support for multiple meters in industrial/commercial settings
+- **Reliability**: Robust communication with automatic error handling
 
-## Solution
-The AmpX Energy Gateway provides a hardware solution that connects to Meatrol Brand energy meters via either Modbus TCP/IP or Modbus RS485 (based on hardware configuration). It collects meter data, presents it in a simple web interface, and transmits it to a central API for further processing and analysis.
+## Solution Approach
+The AmpX Modbus Library provides a comprehensive energy monitoring solution that:
 
-## User Experience Goals
-- Provide a plug-and-play solution for energy monitoring
-- Display real-time energy data in a simple tabular format
-- Enable automated data collection without user intervention
-- Support multiple meters (up to 32) for comprehensive monitoring
+### 1. **Universal Communication**
+- Supports both RS485 and TCP/IP Modbus protocols
+- Automatic meter detection and configuration
+- Robust error handling and retry mechanisms
 
-## Use Cases
-1. **Industrial Energy Monitoring**: Factories monitor energy consumption across multiple meters
-2. **Commercial Building Management**: Building operators track energy usage in different zones
-3. **Energy Auditing**: Energy auditors collect standardized data from multiple measurement points
-4. **Remote Monitoring**: Central monitoring of distributed energy meters
+### 2. **Real-time Data Access**
+- Local web interface for immediate monitoring
+- WebSocket-based live updates
+- JSON API for data integration
+
+### 3. **Cloud Integration**
+- Direct integration with AmpX Portal
+- EmonCMS compatibility for open-source energy monitoring
+- Configurable remote logging intervals
+
+### 4. **User Experience**
+- WiFi auto-configuration through WiFiManager
+- Over-the-air firmware updates
+- Visual status indicators (LEDs)
+- Mobile-responsive web interface
+
+## Target Users
+- **Industrial Facilities**: Monitor multiple electrical circuits
+- **Commercial Buildings**: Energy consumption tracking
+- **Renewable Energy Systems**: Solar/wind power monitoring
+- **Research & Development**: Energy efficiency studies
+- **Smart Home Enthusiasts**: Advanced energy monitoring
 
 ## Value Proposition
-- Eliminates the need for manual meter reading
-- Supports both TCP/IP and RS485 meters (with appropriate hardware)
-- Provides real-time visibility through local web interface
-- Automates data collection for centralized analysis
-- Supports multi-meter installations for comprehensive energy management
-
-## Market Context
-The solution addresses the growing need for automated energy monitoring in industrial and commercial settings, particularly where multiple measurement points need to be consolidated into a single system. 
+- **Cost-Effective**: ESP32-based solution reduces hardware costs
+- **Flexible**: Supports various meter types and communication methods
+- **Scalable**: Handle 1-4 meters with single gateway
+- **Reliable**: Built-in error handling and automatic recovery
+- **Future-Proof**: OTA updates and extensible architecture

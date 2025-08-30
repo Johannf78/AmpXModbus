@@ -1,87 +1,144 @@
-# Technical Context: AmpX Energy Gateway
+# Technical Context - AmpX Modbus Library
+
+## Hardware Requirements
+
+### Primary Platform
+- **ESP32 Node32s**: Main development board
+- **Flash Memory**: 4MB (minimum)
+- **RAM**: 520KB (sufficient for web server and JSON processing)
+- **WiFi**: Built-in 802.11 b/g/n support
+
+### Communication Hardware
+#### RS485 Configuration
+- **MAX485 Transceiver**: RS485 to TTL conversion
+- **Control Pins**: DE (Data Enable) and RE (Receive Enable)
+- **Serial Pins**: RX (GPIO 16), TX (GPIO 17)
+- **Termination**: 120Ω resistors for proper bus termination
+
+#### TCP/IP Configuration
+- **Ethernet Module**: W5500 or similar SPI-based module
+- **SPI Pins**: CS (GPIO 5), MOSI, MISO, SCK
+- **Network**: Static IP configuration (192.168.2.121)
+
+### Status Indicators
+- **LED 1 (Power)**: GPIO 12 - System power indicator
+- **LED 2 (Meter)**: GPIO 14 - Meter communication status
+- **LED 3 (WiFi)**: GPIO 27 - WiFi connection status
+- **LED 4 (Internet)**: GPIO 26 - Internet connectivity status
+
+## Software Dependencies
+
+### Core Libraries
+```cpp
+#include <Arduino.h>           // ESP32 core
+#include <WiFi.h>              // WiFi connectivity
+#include <WebServer.h>         // HTTP server
+#include <WebSocketsServer.h>  // Real-time communication
+#include <ArduinoJson.h>       // JSON processing
+#include <WiFiManager.h>       // WiFi configuration
+#include <ArduinoOTA.h>        // Over-the-air updates
+#include <Preferences.h>       // NVS storage
+#include <HTTPClient.h>        // HTTP client
+```
+
+### Custom Libraries
+- **ampx_modbus_rs485.h**: RS485 Modbus implementation
+- **ampx_modbus_tcpip.h**: TCP/IP Modbus implementation
+
+### External Services
+- **AmpX Portal**: `https://app.ampx.co/`
+- **EmonCMS**: `http://emoncms.org`
+- **Firmware Updates**: `https://ampx.co/downloads/`
+
+## Communication Protocols
+
+### Modbus Protocol
+- **Function Code 0x03**: Read Holding Registers
+- **Data Format**: Big-endian with byte swapping
+- **CRC-16**: Standard Modbus CRC calculation
+- **Timeout**: 1000ms response timeout
+- **Retry Logic**: Built into communication functions
+
+### Network Configuration
+```cpp
+// Static IP Configuration
+IPAddress ip(192, 168, 2, 121);
+IPAddress gateway(192, 168, 2, 1);
+IPAddress subnet(255, 255, 255, 0);
+IPAddress meter_ip(192, 168, 2, 122);
+```
+
+### Web Server Configuration
+- **HTTP Port**: 80
+- **WebSocket Port**: 81
+- **Content Type**: text/html, application/json
+- **CORS**: Not explicitly configured (may need for cross-origin requests)
+
+## Data Processing
+
+### Register Mapping
+- **Serial Number**: Registers 70-71 (32-bit integer)
+- **Voltage L1/L2/L3**: Registers 1010-1015 (32-bit float)
+- **Current L1/L2/L3**: Registers 1000-1007 (32-bit float)
+- **Active Power**: Registers 1028-1035 (32-bit float)
+- **Energy Imported**: Registers 2500-2515 (64-bit integer)
+
+### Data Conversion
+```cpp
+// Float conversion with byte swapping
+float convertToFloat(uint32_t value) {
+  // Byte order: [3][2][1][0] -> [0][1][2][3]
+}
+
+// 64-bit integer combination
+uint64_t combineAndSwap64(uint16_t reg0, uint16_t reg1, 
+                         uint16_t reg2, uint16_t reg3) {
+  // Little-endian to big-endian conversion
+}
+```
+
+## Performance Characteristics
+
+### Timing
+- **Meter Reading**: Every 3 seconds
+- **Cloud Upload**: Every 5 minutes (300 seconds)
+- **System Restart**: Every 24 hours (86400 seconds)
+- **WebSocket Updates**: Real-time (immediate)
+
+### Memory Usage
+- **JSON Buffer**: 512 bytes (StaticJsonDocument)
+- **Meter Data**: ~200 bytes per meter
+- **Web Page**: ~2KB HTML
+- **Total RAM Usage**: ~50KB (well within ESP32 limits)
+
+### Network Bandwidth
+- **Local Web Interface**: ~1KB per request
+- **Cloud Upload**: ~500 bytes per meter per upload
+- **WebSocket Updates**: ~200 bytes per update
 
 ## Development Environment
-- **IDE**: Arduino IDE / VS Code with PlatformIO
-- **Version Control**: Git
-- **Documentation**: Markdown
 
-## Hardware Platform
-- **Microcontroller**: ESP32 Wroom 32U
-- **Network Interface**: 
-  - RS485 Version: MAX485 interface
-  - TCP/IP Version: W5500 Lite Ethernet
-- **Status Indicators**: Four LEDs for power, meter connection, WiFi, and internet/API status (used for real-time feedback and error indication)
-- **Power**: 3.3V operating voltage
+### Arduino IDE Configuration
+- **Board**: ESP32 Dev Module
+- **Upload Speed**: 921600 baud
+- **CPU Frequency**: 240MHz
+- **Flash Size**: 4MB
+- **Partition Scheme**: Default 4MB with spiffs
 
-## Dependencies
-- **ESP32 Core**: Arduino-ESP32 framework
-- **Modbus Implementation**: Custom implementation for Meatrol meters
-- **Web Server**: ESP32 WebServer library
-- **WebSockets**: For real-time web updates (by Markus Sattler)
-- **ArduinoJson**: Used for API data formatting and meter register definitions
-- **WiFiManager**: For WiFi configuration (by tzapu)
-- **HTTPClient**: For API communication
-- **Preferences**: For persistent storage of settings (planned for API endpoints/credentials)
+### Debug Configuration
+```cpp
+#define DEBUG 1
+#if DEBUG == 1
+  #define debug(x) Serial.print(x)
+  #define debugln(x) Serial.println(x)
+#else
+  #define debug(x)
+  #define debugln(x)
+#endif
+```
 
-## Technology Stack
-- **Language**: C/C++
-- **Protocol**: Modbus (RTU over RS485 or TCP/IP)
-- **Web Interface**: HTML, CSS, JavaScript
-- **Data Exchange**: JSON for API communication and WebSocket updates
-- **Network**: TCP/IP over Ethernet or WiFi
-- **Persistent Storage**: NVS (Non-Volatile Storage)
-
-## Technical Implementation Details
-- **Memory Usage**: 
-  - DynamicJsonDocument (2KB) for meter data
-  - String objects for serial numbers and data processing (optimization planned)
-  - Multiple global variables
-- **Initialization**: Modular functions for NVS, WiFi, NTP, and Ethernet setup
-- **Status LEDs**: Used for power, meter, WiFi, and internet/API status
-
-- **Communication Configuration**:
-  - RS485: Uses hardware UART with direction control on pins 16/17
-  - TCP/IP: Uses W5500 Ethernet with SPI connection
-
-- **Data Polling**:
-  - Web updates: 3-second intervals
-  - API uploads: 5-minute intervals
-  - System restart: Daily (24-hour interval)
-
-- **Multi-Meter Support**:
-  - Up to 4 meters currently supported (architecture allows more)
-  - Auto-detection of connected meters
-  - Individual meter addressing
-
-## Observed Technical Constraints
-- **Memory Limitations**: Heavy String usage could lead to fragmentation (planned optimization)
-- **Global State**: Many global variables increase complexity
-- **Error Recovery**: Improved, but further mechanisms planned
-- **Security**: Credentials and API endpoints currently hardcoded (to be moved to persistent storage)
-- **API Communication**: HTTP and HTTPS endpoints supported
-
-## Third-Party Integration
-- **API Endpoints**:
-  - AmpX Portal: https://app.ampx.co/wp-json/ampx-energy/v1/log
-  - Docker API: http://192.168.2.32:8080/api/
-  - Endpoints and credentials to be moved to persistent storage and web admin
-
-## Build Configuration
-- **Conditional Compilation**: `MODBUS_TYPE` defines hardware variant
-  - `MODBUS_TYPE_RS485 = 1`
-  - `MODBUS_TYPE_TCPIP = 2`
-- **Debug Mode**: Configurable via `DEBUG` flag
-
-## Testing State
-- Functional testing with live meters required
-- No automated testing observed in codebase
-- Manual verification of all functionality needed
-
-## Optimization Opportunities
-- Move credentials and API endpoints to persistent storage
-- Optimize string handling and memory usage
-- Further modularize error handling and recovery
-- Code cleanup (remove commented sections, consolidate duplication)
-- Expand multi-meter support
-
-This document reflects the latest technical context and implementation details from the most recent code review. 
+### Build Configuration
+- **Compiler**: ESP32 Arduino Core
+- **Libraries**: Managed through Arduino Library Manager
+- **OTA Updates**: Enabled for remote firmware updates
+- **NVS Storage**: Used for persistent configuration
