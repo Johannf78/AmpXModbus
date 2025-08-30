@@ -1,77 +1,28 @@
 //Initialise the server and websocket
 void initServer() {
-  debugln("Starting initServer()...");
-  
-  // Initialize SPIFFS
-  if (!SPIFFS.begin(true)) {
-    debugln("SPIFFS Mount Failed");
-    return;
-  }
-  debugln("SPIFFS mounted successfully");
-  
-  // List all files in SPIFFS for debugging
-  debugln("Files in SPIFFS:");
-  File root = SPIFFS.open("/");
-  if (root) {
-    File file = root.openNextFile();
-    while (file) {
-      debug("File: ");
-      debug(file.name());
-      debug(" Size: ");
-      debugln(String(file.size()) + " bytes");
-      file = root.openNextFile();
-    }
-    root.close();
-  } else {
-    debugln("Failed to open SPIFFS root directory");
-  }
-  
-  debugln("Setting up server routes...");
   server.on("/", handleRoot);
   // Commented out to reduce space
   // server.on("/update", HTTP_POST, handleUpdate);
   server.on("/settings", handleSettings);
   server.on("/admin", handleAdmin);
   server.on("/update_meters_name", HTTP_POST, handleChangeMetersName);
-  
-  debugln("Starting web server...");
   server.begin();
-  debugln("Web server started on port 80");
-  
   //Initialise the websockets on port 81
   webSocket.begin();
-  debugln("WebSocket server started on port 81");
-  debugln("initServer() completed successfully");
 }
 
 //Handle the root webpage
 void handleRoot() {
-  debugln("=== handleRoot() called ===");
-  
-  // Read HTML file from SPIFFS
-  File file = SPIFFS.open("/index.html", "r");
-  if (!file) {
-    debugln("Failed to open index.html from SPIFFS");
-    server.send(500, "text/plain", "Failed to read webpage from SPIFFS");
-    return;
-  }
-  debugln("Successfully opened index.html from SPIFFS");
-  debugln("File size: " + String(file.size()) + " bytes");
-  
-  //Define the webpage variable and read the file from the SPIFFS file system
-  String webpage = file.readString();
-  file.close();
-  
-  debugln("Webpage content length: " + String(webpage.length()));
-  debugln("First 100 characters of webpage:");
-  debugln(webpage.substring(0, min(100, (int)webpage.length())));
+  //String html = "<h1>AmpX Open Energy Gateway</h1>";
+  //String vol = "<h1>Voltage on L1: " + String(voltage_on_L1, 2) + "(V)</h1>";
+  //html += vol;
+  //the String webpage has been defined in the included file webpage.h
 
   //Replace the string m1_serial_number with the actual serial number, done here as it does not update regularly like values.
   webpage.replace("m1_serial_number", m1_serial_number);
   webpage.replace("m2_serial_number", m2_serial_number);
   webpage.replace("m3_serial_number", m3_serial_number);
-  webpage.replace("m4_serial_number", m4_serial_number);
-  webpage.replace("%NUMBER_OF_METERS%", String(numberOfMeters));
+  webpage.replace("numberOfMetersValue", String(numberOfMeters));
 
   /*
   for (int i = 1; i <= maxNumberOfMeters; i++)
@@ -86,46 +37,31 @@ void handleRoot() {
   JsonDoc["m3_name"] = preferences.getString("m3_name");
   JsonDoc["m4_name"] = preferences.getString("m4_name");
 
-  debugln("Sending webpage to client...");
   server.send(200, "text/html", webpage);
-  debugln("=== handleRoot() completed ===");
 }
 
 //Handle the settings webpage
 void handleSettings()
 {
-
-  // Read HTML file from SPIFFS
-  File file = SPIFFS.open("/settings.html", "r");
-  if (!file) {
-    debugln("Failed to open settings.html from SPIFFS");
-    server.send(500, "text/plain", "Failed to read webpage from SPIFFS");
-    return;
-  }
-
-  //Define the webpage variable and read the file from the SPIFFS file system
-  String webpage = file.readString();
-  file.close();
-
-  //String page = webpage_settings;
+  String page = webpage_settings;
   //Use javascript to hide settings for meters not present.
-  webpage.replace("numberOfMetersValue", String(numberOfMeters));
-  webpage.replace("m_connected_meters_num", String(numberOfMeters));
-  webpage.replace("m_gateway_id", String(AMPX_GATEWAY_ID));
+  page.replace("numberOfMetersValue", String(numberOfMeters));
+  page.replace("m_connected_meters_num", String(numberOfMeters));
+  page.replace("m_gateway_id", String(AMPX_GATEWAY_ID));
 
   String m1_name = preferences.getString("m1_name");
-  debugln("m1_name_value: " + m1_name);
-  webpage.replace("m1_name_value", m1_name);
+  Serial.println("m1_name_value: " + m1_name);
+  page.replace("m1_name_value", m1_name);
 
   String m2_name = preferences.getString("m2_name");
-  debugln("m2_name_value: " + m2_name);
-  webpage.replace("m2_name_value", m2_name);
+  Serial.println("m2_name_value: " + m2_name);
+  page.replace("m2_name_value", m2_name);
 
     //Replace the string m1_serial_number with the actual serial number, done here as it does not update regularly like values.
-  webpage.replace("m1_serial_number", m1_serial_number);
-  webpage.replace("m2_serial_number", m2_serial_number);
-  webpage.replace("m3_serial_number", m3_serial_number);
-  webpage.replace("m4_serial_number", m4_serial_number);
+  page.replace("m1_serial_number", m1_serial_number);
+  page.replace("m2_serial_number", m2_serial_number);
+  page.replace("m3_serial_number", m3_serial_number);
+  page.replace("m4_serial_number", m4_serial_number);
 
   int rssi = WiFi.RSSI();
   // -100 - -30dbm to 0 - 100%
@@ -136,29 +72,16 @@ void handleSettings()
     percentage = 100;
   JsonDoc["m_wifi_rssi"] = String(rssi) + "dBm (" + String(percentage) + "%)";
 
-  server.send(200, "text/html", webpage);
+  server.send(200, "text/html", page);
 }
 
 //Handle the admin webpage
 void handleAdmin()
 {
-  // Read HTML file from SPIFFS
-  File file = SPIFFS.open("/admin.html", "r");
-  if (!file) {
-    debugln("Failed to open admin.html from SPIFFS");
-    server.send(500, "text/plain", "Failed to read webpage from SPIFFS");
-    return;
-  }
-
-  //Define the webpage variable and read the file from the SPIFFS file system
-  String webpage = file.readString();
-  file.close();
-
   //Handle the admin page. Change the gateway ID, Server and API key, and other settings only ment for admin.
   //ToDo: Not sure if this is needed, as it can just be hard coded... Lets see...
-  //String page = webpage_admin;
-  server.send(200, "text/html", webpage); //Send the webpage to the client
-
+  String page = webpage_admin;
+  server.send(200, "text/html", page);
 }
 
 void handleWebSocket() {

@@ -60,12 +60,12 @@ Go to Tools > Partition Scheme and select "Minimal SPIFFS (1.9MB APP with OTA/19
 
 //SPIFFS SPI Flash File System, this is used to store the web pages in the flash memory of the ESP32.
 //This adds about 30% to the 1MB program file but moves and loads the html files from the SPIFFS memomory
-#include "SPIFFS.h"
+//#include "SPIFFS.h"
 
 //The HTML code for the webpages are stored in a seperate file, this makes the code easier to read.
-//#include "webpage.h"  //Moved to SPIFFS
-//#include "web_settings.h" //Moved to SPIFFS
-//#include "web_admin.h" //Moved to SPIFFS
+#include "webpage.h"  //Moved to SPIFFS
+#include "web_settings.h" //Moved to SPIFFS
+#include "web_admin.h" //Moved to SPIFFS
 
 //Define the meter registers and datatypes here in json format.
 #include "meter_registers.h"
